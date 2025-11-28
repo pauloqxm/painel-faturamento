@@ -1013,7 +1013,70 @@ with col_map:
         legend._template = Template(legend_html)
         fmap.get_root().add_child(legend)
 
-        LayerControl(collapsed=True).add_to(fmap)
+        LayerControl(collapsed=True, position="topright").add_to(fmap)
+
+        # CSS moderno pro botão de camadas
+        layer_control_css = """
+        {% macro html(this, kwargs) %}
+        <style>
+        /* Container do controle de camadas (posição e margens) */
+        .leaflet-top.leaflet-right .leaflet-control-layers {
+            margin-top: 12px;
+            margin-right: 12px;
+        }
+        
+        /* Botão fechado: bolinha branca com ícone */
+        .leaflet-control-layers-toggle {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #ffffff !important;
+            background-image: none !important; /* remove o ícone padrão */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            border: none;
+            position: relative;
+        }
+        
+        /* Ícone do botão (tracinhos) */
+        .leaflet-control-layers-toggle::after {
+            content: "☰";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -55%);
+            font-size: 22px;
+            color: #0984e3;
+            font-weight: 700;
+        }
+        
+        /* Painel expandido mais clean, com cantos arredondados */
+        .leaflet-control-layers-expanded {
+            border-radius: 18px;
+            border: 1px solid #dde2eb;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+            padding: 10px 12px;
+            font-family: "Segoe UI", system-ui, sans-serif;
+            font-size: 12px;
+        }
+        
+        /* Labels das camadas */
+        .leaflet-control-layers-expanded label {
+            margin-bottom: 4px;
+        }
+        
+        /* Checkbox mais alinhado */
+        .leaflet-control-layers-selector {
+            margin-right: 6px;
+        }
+        </style>
+        {% endmacro %}
+        """
+        
+        from branca.element import Template, MacroElement
+        layer_css = MacroElement()
+        layer_css._template = Template(layer_control_css)
+        fmap.get_root().add_child(layer_css)
+        
 
         map_data = st_folium(fmap, height=500, use_container_width=True)
 
