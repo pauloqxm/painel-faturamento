@@ -645,7 +645,7 @@ else:
     if diff_cols:
         alertas_df["Tipo Divergência"] = alertas_df.apply(classifica_linha, axis=1)
 
-    # Filtro por tipo (valores batendo com a coluna)
+    # Filtro por tipo (valores iguais aos da coluna)
     filtro_tipo = st.radio(
         "Filtrar divergências",
         ["Todas", "Positiva", "Negativa", "Mista"],
@@ -696,14 +696,31 @@ else:
         ] if c in df_exibir.columns
     ]
 
-    # 🔢 Formatar apenas colunas numéricas com 2 casas decimais
-    numeric_for_fmt = [
-        c for c in cols_exist_alerta
-        if pd.api.types.is_numeric_dtype(df_exibir[c])
+    # Lista fixa de colunas numéricas que queremos com 2 casas
+    numeric_cols_all = [
+        "Nº Viveiros total",
+        "Atual Viveiros Total",
+        "Δ Viveiros Total",
+        "Nº Viveiros cheio",
+        "Atual Viveiros cheio",
+        "Δ Viveiros Cheio",
+        "Área (ha).1",
+        "Atual Área (ha).1",
+        "Δ Área (ha)",
+        "Prof. Média  (m)",
+        "Atual Profun.",
+        "Δ Profundidade (m)",
     ]
-    fmt = {c: "{:.2f}" for c in numeric_for_fmt}
+    numeric_cols = [c for c in numeric_cols_all if c in cols_exist_alerta]
 
-    styler = df_exibir[cols_exist_alerta].style.format(fmt)
+    # Faz uma cópia só para exibição e força tudo para número onde der
+    df_view = df_exibir[cols_exist_alerta].copy()
+    for col in numeric_cols:
+        df_view[col] = pd.to_numeric(df_view[col], errors="coerce")
+
+    # Formatação: TODAS essas numéricas com 2 casas
+    fmt = {c: "{:.2f}" for c in numeric_cols}
+    styler = df_view.style.format(fmt)
 
     # Blocos com fundo suave (sem sobrescrever os Δ)
     bloco_viv_total = {"Nº Viveiros total", "Atual Viveiros Total", "Δ Viveiros Total"}
