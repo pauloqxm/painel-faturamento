@@ -10,7 +10,7 @@ import streamlit as st
 from zoneinfo import ZoneInfo
 
 import folium
-from folium import GeoJsonTooltip, LayerControl
+from folium import LayerControl
 from folium.plugins import HeatMap
 from streamlit_folium import st_folium
 
@@ -18,13 +18,6 @@ import altair as alt
 import streamlit.components.v1 as components
 from urllib.error import HTTPError
 from branca.element import Template, MacroElement
-
-# Transformação de coordenadas
-try:
-    from pyproj import Transformer
-    TRANSFORMER = Transformer.from_crs("EPSG:31984", "EPSG:4326", always_xy=True)
-except Exception:
-    TRANSFORMER = None
 
 # =============================
 # Config geral
@@ -212,7 +205,11 @@ def to_number(v):
     s = str(v).strip()
     if s == "":
         return np.nan
-    s = s.replace(".", "").replace(",", ".") if s.count(",") == 1 and s.count(".") > 1 else s.replace(",", ".")
+    # Trata casos com vírgula como decimal
+    if "," in s and s.count(",") == 1 and s.count(".") <= 1:
+        s = s.replace(".", "").replace(",", ".")
+    else:
+        s = s.replace(",", ".")
     try:
         return float(s)
     except Exception:
@@ -433,7 +430,7 @@ st.markdown("### 🔍 Filtros de Pesquisa")
 with st.expander("Filtros avançados", expanded=True):
     col_f1, col_f2, col_f3 = st.columns([1.2, 1.2, 1.6])
 
-    # Ano da Data Filtro
+    # Ano (Data Filtro)
     with col_f1:
         anos = []
         if "Ano_filtro" in df.columns:
@@ -448,7 +445,7 @@ with st.expander("Filtros avançados", expanded=True):
         else:
             ano_sel = None
 
-    # Mês da Data Filtro
+    # Mês (Data Filtro)
     with col_f2:
         meses = []
         if "Mes_filtro" in df.columns:
@@ -485,7 +482,7 @@ with st.expander("Filtros avançados", expanded=True):
         )
 
     with col_f5:
-        # Caso exista algum campo de município ou outra categoria, dá para complementar depois
+        # Espaço para filtros adicionais no futuro
         pass
 
 # =============================
@@ -503,11 +500,10 @@ if ocorr_sel and "Ocorrências" in fdf.columns:
     fdf = fdf[fdf["Ocorrências"].isin(ocorr_sel)]
 
 if search_text:
-    st.write("")  # espaço
     txt = search_text.strip().lower()
-    mask = pd.Series([True] * len(fdf))
+    mask = pd.Series([False] * len(fdf))
     if "CÓDIGO" in fdf.columns:
-        mask = mask & fdf["CÓDIGO"].astype(str).str.lower().str.contains(txt, na=False)
+        mask = mask | fdf["CÓDIGO"].astype(str).str.lower().str.contains(txt, na=False)
     if "Nome" in fdf.columns:
         mask = mask | fdf["Nome"].astype(str).str.lower().str.contains(txt, na=False)
     fdf = fdf[mask]
@@ -674,23 +670,17 @@ with col_map:
         fg_pontos = folium.FeatureGroup(name="Unidades de Viveiros", show=True)
         pts = []
 
-        lat_col = "LATITUDE" if "LATITUDE" in fdf.columns else None
-        lon_col = "LONGITUDE" if "LONGITUDE" in fdf.columns else None
+        lat_col = "Lati" if "Lati" in fdf.columns else None
+        lon_col = "Long" if "Long" in fdf.columns else None
 
         for _, row in fdf.iterrows():
             if not lat_col or not lon_col:
                 continue
-            x_utm = to_number(row.get(lon_col))
-            y_utm = to_number(row.get(lat_col))
-            if np.isnan(x_utm) or np.isnan(y_utm):
-                continue
 
-            if TRANSFORMER is not None:
-                lon, lat = TRANSFORMER.transform(x_utm, y_utm)
-            else:
-                # Fallback tosco caso pyproj não esteja disponível
-                # Apenas impede crash e não deve ser usado em produção sem converter direito
-                lon, lat = x_utm / 100000.0, y_utm / 100000.0
+            lat = to_float(row.get(lat_col))
+            lon = to_float(row.get(lon_col))
+            if lat is None or lon is None or math.isnan(lat) or math.isnan(lon):
+                continue
 
             popup_html = make_popup_html(row)
             popup = folium.Popup(popup_html, max_width=380)
@@ -716,18 +706,18 @@ with col_map:
 
         fg_pontos.add_to(fmap)
 
-        # Heatmap opcional com base em área ou viveiros
-        if "Atual Viveiros Total_num" in fdf.columns and lat_col and lon_col and TRANSFORMER is not None:
+        # Heatmap usando Lati e Long
+        if "Atual Viveiros Total_num" in fdf.columns and lat_col and lon_col:
             heat_rows = []
             for _, row in fdf.iterrows():
-                x_utm = to_number(row.get(lon_col))
-                y_utm = to_number(row.get(lat_col))
-                if np.isnan(x_utm) or np.isnan(y_utm):
-                    continue
+                lat = to_float(row.get(lat_col))
+                lon = to_float(row.get(lon_col))
                 value = row.get("Atual Viveiros Total_num")
-                if pd.isna(value) or value <= 0:
+                if (
+                    lat is None or lon is None or
+                    pd.isna(value) or value <= 0
+                ):
                     continue
-                lon, lat = TRANSFORMER.transform(x_utm, y_utm)
                 heat_rows.append([lat, lon, float(value)])
 
             if heat_rows:
@@ -804,39 +794,25 @@ with col_fotos:
         fdf_gallery = fdf.copy()
         clicked = False
 
+        lat_col = "Lati" if "Lati" in fdf.columns else None
+        lon_col = "Long" if "Long" in fdf.columns else None
+
         if map_data and 'last_object_clicked' in map_data and lat_col and lon_col:
             click_info = map_data.get("last_object_clicked") or map_data.get("last_clicked")
-            if click_info and TRANSFORMER is not None:
+            if click_info:
                 clicked = True
                 click_lat = click_info["lat"]
                 click_lon = click_info["lng"]
 
                 tmp = fdf.copy()
-                tmp["x_utm"] = tmp[lon_col].apply(to_number)
-                tmp["y_utm"] = tmp[lat_col].apply(to_number)
-                tmp = tmp.dropna(subset=["x_utm", "y_utm"])
+                tmp["_lat"] = tmp[lat_col].apply(to_float)
+                tmp["_lon"] = tmp[lon_col].apply(to_float)
+                tmp = tmp.dropna(subset=["_lat", "_lon"])
 
-                # Converte todos para lat lon para medir distância
-                coords = []
-                for idx, r in tmp.iterrows():
-                    try:
-                        lon, lat = TRANSFORMER.transform(r["x_utm"], r["y_utm"])
-                        coords.append((idx, lat, lon))
-                    except Exception:
-                        continue
-
-                if coords:
-                    click_lat_arr = click_lat
-                    click_lon_arr = click_lon
-                    dists = []
-                    for idx, lat, lon in coords:
-                        d2 = (lat - click_lat_arr) ** 2 + (lon - click_lon_arr) ** 2
-                        dists.append((d2, idx))
-                    dists.sort(key=lambda x: x[0])
-                    nearest_idx = [d[1] for d in dists[:1]]
-                    fdf_gallery = tmp.loc[nearest_idx]
-            elif click_info:
-                clicked = True
+                if not tmp.empty:
+                    tmp["dist2"] = (tmp["_lat"] - click_lat) ** 2 + (tmp["_lon"] - click_lon) ** 2
+                    tmp = tmp.sort_values("dist2")
+                    fdf_gallery = tmp.head(1)
 
         if not foto_col:
             st.info("📷 Coluna de fotos não encontrada na planilha.")
@@ -985,4 +961,3 @@ st.markdown("""
     </div>
 </div>
 """, unsafe_allow_html=True)
-
