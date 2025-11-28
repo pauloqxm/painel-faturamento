@@ -911,7 +911,7 @@ with col_map:
           <div id="legend-viveiros-body" style="margin-top:4px;">
         """ + legend_items_html + """
             <div style="font-size:11px;color:#636e72;margin-top:4px;">
-              Cores por categoria de ocorrência. Clique em um ponto para ver detalhes e fotos.
+              Cores por categoria de ocorrência.
             </div>
           </div>
         </div>
