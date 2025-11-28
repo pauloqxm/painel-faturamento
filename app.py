@@ -678,145 +678,158 @@ else:
     df["Mes_filtro"] = None
 
 # =============================
-# Filtros Modernizados – Versão Avançada
+# Filtros Modernizados (retângulo estilizado)
 # =============================
-
-def render_filtros_painel(df: pd.DataFrame) -> pd.DataFrame:
-
-    with st.container():
-        # Cabeçalho estilizado do card
-        st.markdown(
-            """
-            <div class="painel-filter-header">
-              <div class="painel-filter-header-left">
-                <div class="painel-filter-icon">🔍</div>
-                <div class="painel-filter-text">
-                  <div class="painel-filter-title">Filtros de pesquisa</div>
-                  <div class="painel-filter-subtitle">
+with st.container():
+    st.markdown(
+        """
+        <div class="tech-filter-wrapper tech-fade-in">
+          <div class="tech-filter-inner">
+            <div class="tech-filter-header">
+              <div class="tech-filter-header-left">
+                <div class="tech-filter-icon">🔍</div>
+                <div class="tech-filter-text">
+                  <div class="tech-filter-title">Filtros de pesquisa</div>
+                  <div class="tech-filter-subtitle">
                     Refine os dados por período, ocorrência e unidade monitorada
                   </div>
                 </div>
               </div>
-              <div class="painel-filter-chip">
+              <div class="tech-filter-chip">
                 Filtro aplicado em tempo real
               </div>
             </div>
-            """,
-            unsafe_allow_html=True
+            <div class="tech-filter-section">
+        """,
+        unsafe_allow_html=True,
+    )
+
+    col_f1, col_f2, col_f3 = st.columns([1.2, 1.2, 1.6])
+
+    # Ano (Data Filtro) – com botão para ativar
+    with col_f1:
+        anos_lista = (
+            sorted(df["Ano_filtro"].dropna().unique().tolist())
+            if "Ano_filtro" in df.columns
+            else []
         )
-
-        st.markdown('<div class="painel-filter-inner">', unsafe_allow_html=True)
-
-        col1, col2, col3 = st.columns([1.2, 1.2, 1.8])
-
-        # ----------------------------
-        # Ano
-        # ----------------------------
-        with col1:
-            anos = (
-                sorted(df["Ano_filtro"].dropna().unique().tolist())
-                if "Ano_filtro" in df.columns else []
-            )
-
+        if anos_lista:
             use_filter_ano = st.toggle("📅 Filtrar Ano", value=False)
-            if use_filter_ano and anos:
+            if use_filter_ano:
                 ano_sel = st.multiselect(
-                    "Ano",
-                    options=anos,
-                    default=anos
+                    "Ano (Data Filtro)",
+                    options=anos_lista,
+                    default=anos_lista,
                 )
             else:
                 ano_sel = []
+        else:
+            use_filter_ano = False
+            ano_sel = []
 
-        # ----------------------------
-        # Mês
-        # ----------------------------
-        with col2:
-            meses = (
-                df["Mes_filtro"].dropna().unique().tolist()
-                if "Mes_filtro" in df.columns else []
-            )
-
-            ordem = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"]
-            meses = sorted(meses, key=lambda x: ordem.index(x)) if meses else []
-
+    # Mês (Data Filtro) – com botão para ativar
+    with col_f2:
+        meses_lista = (
+            [m for m in df["Mes_filtro"].dropna().unique().tolist()]
+            if "Mes_filtro" in df.columns
+            else []
+        )
+        if meses_lista:
+            ordem_meses = [
+                "Jan",
+                "Fev",
+                "Mar",
+                "Abr",
+                "Mai",
+                "Jun",
+                "Jul",
+                "Ago",
+                "Set",
+                "Out",
+                "Nov",
+                "Dez",
+            ]
+            meses_lista = sorted(meses_lista, key=lambda x: ordem_meses.index(x))
             use_filter_mes = st.toggle("🗓️ Filtrar Mês", value=False)
-            if use_filter_mes and meses:
+            if use_filter_mes:
                 mes_sel = st.multiselect(
-                    "Mês",
-                    options=meses,
-                    default=meses
+                    "Mês (Data Filtro)",
+                    options=meses_lista,
+                    default=meses_lista,
                 )
             else:
                 mes_sel = []
+        else:
+            use_filter_mes = False
+            mes_sel = []
 
-        # ----------------------------
-        # Busca textual
-        # ----------------------------
-        with col3:
-            search_text = st.text_input(
-                "🔎 Buscar por CÓDIGO ou Nome",
-                placeholder="Digite parte do código ou nome"
-            )
+    # Busca por código ou nome
+    with col_f3:
+        search_text = st.text_input(
+            "🔎 Buscar por CÓDIGO ou Nome",
+            placeholder="Digite parte do código ou do nome",
+        )
 
-        # ----------------------------
-        # Linha 2 – Ocorrências
-        # ----------------------------
-        col4, col5 = st.columns([1.5, 1])
+    col_f4, col_f5 = st.columns(2)
 
-        with col4:
-            ocorr_opts = sorted(
-                [o for o in df.get("Ocorrências", pd.Series()).dropna().unique().tolist()]
-            )
+    with col_f4:
+        ocorr_opts = sorted(
+            [
+                o
+                for o in df.get("Ocorrências", pd.Series())
+                .dropna()
+                .unique()
+                .tolist()
+            ]
+        )
+        ocorr_sel = st.multiselect(
+            "⚠️ Filtrar Ocorrências",
+            options=ocorr_opts,
+            default=ocorr_opts if ocorr_opts else None,
+        )
 
-            ocorr_sel = st.multiselect(
-                "⚠️ Ocorrências",
-                options=ocorr_opts,
-                default=ocorr_opts if ocorr_opts else None
-            )
+    with col_f5:
+        pass
 
-        with col5:
-            st.write(" ")
-
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    # ========================================================
-    # APLICAÇÃO DOS FILTROS (blindado contra erros)
-    # ========================================================
-    fdf = df.copy()
-
-    # Ano
-    if use_filter_ano and ano_sel:
-        fdf = fdf[fdf["Ano_filtro"].isin(ano_sel)]
-
-    # Mês
-    if use_filter_mes and mes_sel:
-        fdf = fdf[fdf["Mes_filtro"].isin(mes_sel)]
-
-    # Ocorrências
-    if ocorr_sel and "Ocorrências" in fdf.columns:
-        fdf = fdf[fdf["Ocorrências"].isin(ocorr_sel)]
-
-    # Busca
-    if search_text.strip():
-        txt = search_text.lower().strip()
-        mask = pd.Series(False, index=fdf.index)
-
-        if "CÓDIGO" in fdf.columns:
-            mask |= fdf["CÓDIGO"].astype(str).str.lower().str.contains(txt, na=False)
-        if "Nome" in fdf.columns:
-            mask |= fdf["Nome"].astype(str).str.lower().str.contains(txt, na=False)
-
-        fdf = fdf[mask]
-
-    return fdf
-
+    st.markdown(
+        """
+            </div> <!-- .tech-filter-section -->
+          </div>   <!-- .tech-filter-inner -->
+        </div>     <!-- .tech-filter-wrapper -->
+        """,
+        unsafe_allow_html=True,
+    )
 
 # =============================
-# CHAMA O FILTRO AQUI
+# Aplicação dos filtros
 # =============================
-fdf = render_filtros_painel(df)
+fdf = df.copy()
 
+# Ano: só filtra se o toggle estiver ligado e houver seleção
+if "Ano_filtro" in fdf.columns:
+    if 'use_filter_ano' in locals() and anos_lista and ano_sel:
+        if use_filter_ano and ano_sel:
+            fdf = fdf[fdf["Ano_filtro"].isin(ano_sel)]
+
+# Mês: só filtra se o toggle estiver ligado e houver seleção
+if "Mes_filtro" in fdf.columns:
+    if 'use_filter_mes' in locals() and meses_lista and mes_sel:
+        if use_filter_mes and mes_sel:
+            fdf = fdf[fdf["Mes_filtro"].isin(mes_sel)]
+
+# Ocorrências
+if ocorr_sel and "Ocorrências" in fdf.columns:
+    fdf = fdf[fdf["Ocorrências"].isin(ocorr_sel)]
+
+# Busca por texto
+if search_text:
+    txt = search_text.strip().lower()
+    mask = pd.Series([False] * len(fdf))
+    if "CÓDIGO" in fdf.columns:
+        mask = mask | fdf["CÓDIGO"].astype(str).str.lower().str.contains(txt, na=False)
+    if "Nome" in fdf.columns:
+        mask = mask | fdf["Nome"].astype(str).str.lower().str.contains(txt, na=False)
+    fdf = fdf[mask]
 
 # =============================
 # Cálculo de alertas de divergência
