@@ -444,22 +444,18 @@ if date_col is not None:
     mask_valid = data_raw.str.len() > 0
 
     # Normaliza formato:
-    # 2025/11/04 11:22:03.951+00 -> 2025-11-04 11:22:03.951+00:00
-    data_norm = data_raw.copy()
-    data_norm = data_norm.str.replace("/", "-", regex=False)
-    data_norm = data_norm.str.replace("+00", "+00:00", regex=False)
+    # 2025/11/04 11:22:03.951+00  -> 2025-11-04 11:22:03.951+00:00
+    # 2025-11-04 11:22:03.951+00:00  -> continua igual
+    data_norm = data_raw.str.replace("/", "-", regex=False)
+    data_norm = data_norm.str.replace(r"\+00(?!:)", "+00:00", regex=True)
 
-    # Converte para datetime (pandas detecta o timezone)
-    dt = pd.to_datetime(data_norm, errors="coerce")
+    # Converte para datetime em UTC
+    dt = pd.to_datetime(data_norm.where(mask_valid, None), errors="coerce", utc=True)
 
-    # Cria coluna vazia e preenche só onde é válido
-    df["_Data_dt"] = pd.NaT
-    df.loc[mask_valid, "_Data_dt"] = dt
+    # Joga pra Fortaleza
+    df["_Data_dt"] = dt.dt.tz_convert(TZ)
 
-    # Traz para o fuso de Fortaleza quando tiver timezone
-    if pd.api.types.is_datetime64tz_dtype(df["_Data_dt"].dtype):
-        df["_Data_dt"] = df["_Data_dt"].dt.tz_convert(TZ)
-
+    # Extrai ano e mês
     df["Ano_filtro"] = df["_Data_dt"].dt.year
     df["Mes_filtro_num"] = df["_Data_dt"].dt.month
 
@@ -473,6 +469,7 @@ else:
     df["_Data_dt"] = pd.NaT
     df["Ano_filtro"] = None
     df["Mes_filtro"] = None
+
 
 
 
