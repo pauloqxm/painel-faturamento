@@ -426,12 +426,30 @@ for col in numeric_cols_csv:
         df[col] = df[col].apply(to_number)
 
 # =============================
+# =============================
 # Preparação de datas para filtros
 # =============================
 if "Data Filtro" in df.columns:
-    df["_Data_dt"] = pd.to_datetime(df["Data Filtro"], errors="coerce", dayfirst=True)
+    # Garante string limpa
+    data_raw = df["Data Filtro"].astype(str).str.strip()
+
+    # Normaliza separador de data: 2025/11/04 -> 2025-11-04
+    data_norm = data_raw.str.replace("/", "-", regex=False)
+
+    # Converte levando em conta o fuso (+00 na string)
+    # Ex: 2025-11-04 11:22:03.951+00
+    dt = pd.to_datetime(data_norm, errors="coerce", utc=True)
+
+    # Converte para horário de Fortaleza (se tiver timezone)
+    try:
+        dt_local = dt.dt.tz_convert(TZ)
+    except Exception:
+        dt_local = dt  # se vier sem tz, usa direto
+
+    df["_Data_dt"] = dt_local
     df["Ano_filtro"] = df["_Data_dt"].dt.year
     df["Mes_filtro_num"] = df["_Data_dt"].dt.month
+
     meses_map = {
         1: "Jan", 2: "Fev", 3: "Mar", 4: "Abr",
         5: "Mai", 6: "Jun", 7: "Jul", 8: "Ago",
@@ -441,6 +459,7 @@ if "Data Filtro" in df.columns:
 else:
     df["Ano_filtro"] = None
     df["Mes_filtro"] = None
+
 
 # =============================
 # Filtros Modernizados
