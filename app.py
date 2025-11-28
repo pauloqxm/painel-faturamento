@@ -621,18 +621,10 @@ else:
         "Revise estas unidades com atenção."
     )
 
-    # Classificação das linhas por tipo de divergência
+    # Classificação
     def classifica_linha(row):
-        pos = False
-        neg = False
-        for c in diff_cols:
-            v = row.get(c)
-            if pd.isna(v):
-                continue
-            if v > 0:
-                pos = True
-            if v < 0:
-                neg = True
+        pos = any((row[c] > 0) for c in diff_cols if pd.notna(row[c]))
+        neg = any((row[c] < 0) for c in diff_cols if pd.notna(row[c]))
         if pos and not neg:
             return "Positiva"
         if neg and not pos:
@@ -645,23 +637,14 @@ else:
     if diff_cols:
         alertas_df["Tipo Divergência"] = alertas_df.apply(classifica_linha, axis=1)
 
-    filtro_tipo = st.radio(
-        "Filtrar divergências",
-        ["Todas", "Positivas", "Negativas", "Mistas"],
-        horizontal=True
-    )
+    # Filtro por tipo
+    filtro_tipo = st.radio("Filtrar divergências", ["Todas", "Positivas", "Negativas", "Mistas"], horizontal=True)
 
-    df_exibir = alertas_df
-    if filtro_tipo == "Positivas":
-        df_exibir = alertas_df[alertas_df["Tipo Divergência"] == "Positiva"]
-    elif filtro_tipo == "Negativas":
-        df_exibir = alertas_df[alertas_df["Tipo Divergência"] == "Negativa"]
-    elif filtro_tipo == "Mistas":
-        df_exibir = alertas_df[alertas_df["Tipo Divergência"] == "Mista"]
+    df_exibir = alertas_df.copy()
+    if filtro_tipo != "Todas":
+        df_exibir = df_exibir[df_exibir["Tipo Divergência"] == filtro_tipo]
 
-    df_exibir = df_exibir.copy()
-
-    # Cria colunas de diferença
+    # Criar colunas de diferença
     if "diff_viv_total" in df_exibir.columns:
         df_exibir["Δ Viveiros Total"] = df_exibir["diff_viv_total"]
     if "diff_viv_cheio" in df_exibir.columns:
@@ -671,41 +654,30 @@ else:
     if "diff_prof" in df_exibir.columns:
         df_exibir["Δ Profundidade (m)"] = df_exibir["diff_prof"]
 
-    # Ordem das colunas (como no print)
+    # Ordem das colunas
     cols_alerta = [
-        "CÓDIGO",
-        "Nome",
-        "Nº Viveiros total",
-        "Atual Viveiros Total",
-        "Δ Viveiros Total",
-        "Nº Viveiros cheio",
-        "Atual Viveiros cheio",
-        "Δ Viveiros Cheio",
-        "Área (ha).1",
-        "Atual Área (ha).1",
-        "Δ Área (ha)",
-        "Prof. Média  (m)",
-        "Atual Profun.",
-        "Δ Profundidade (m)",
+        "CÓDIGO", "Nome",
+        "Nº Viveiros total", "Atual Viveiros Total", "Δ Viveiros Total",
+        "Nº Viveiros cheio", "Atual Viveiros cheio", "Δ Viveiros Cheio",
+        "Área (ha).1", "Atual Área (ha).1", "Δ Área (ha)",
+        "Prof. Média  (m)", "Atual Profun.", "Δ Profundidade (m)",
         "Tipo Divergência",
     ]
     cols_exist_alerta = [c for c in cols_alerta if c in df_exibir.columns]
 
-    # Colunas de diferença e formatação com 2 casas decimais
-    subset_diff = [
-        c for c in [
-            "Δ Viveiros Total",
-            "Δ Viveiros Cheio",
-            "Δ Área (ha)",
-            "Δ Profundidade (m)"
-        ] if c in df_exibir.columns
-    ]
+    # ----------------------------
+    # 🔢 FORMATAR TODAS AS COLUNAS NUMÉRICAS COM DUAS CASAS
+    # ----------------------------
+    numeric_cols = []
+    for c in cols_exist_alerta:
+        if pd.api.types.is_numeric_dtype(df_exibir[c]):
+            numeric_cols.append(c)
 
-    fmt = {c: "{:.2f}" for c in subset_diff}
+    fmt = {c: "{:.2f}" for c in numeric_cols}
 
     styler = df_exibir[cols_exist_alerta].style.format(fmt)
 
-    # Blocos de colunas com fundo suave (sem atingir as colunas Δ)
+    # Blocos coloridos (suave)
     bloco_viv_total = {"Nº Viveiros total", "Atual Viveiros Total", "Δ Viveiros Total"}
     bloco_viv_cheio = {"Nº Viveiros cheio", "Atual Viveiros cheio", "Δ Viveiros Cheio"}
     bloco_area = {"Área (ha).1", "Atual Área (ha).1", "Δ Área (ha)"}
@@ -713,22 +685,21 @@ else:
 
     def color_block(col):
         name = col.name
-        # não pinta as colunas de diferença, que já têm vermelho/verde
         if name in subset_diff:
             return [""] * len(col)
         if name in bloco_viv_total:
-            return ["background-color: #f8fafc;"] * len(col)   # azul bem claro
+            return ["background-color: #f8fafc;"] * len(col)
         if name in bloco_viv_cheio:
-            return ["background-color: #f4fbf6;"] * len(col)   # verde bem claro
+            return ["background-color: #f4fbf6;"] * len(col)
         if name in bloco_area:
-            return ["background-color: #fffaf0;"] * len(col)   # amarelo bem claro
+            return ["background-color: #fffaf0;"] * len(col)
         if name in bloco_prof:
-            return ["background-color: #f9f5ff;"] * len(col)   # lilás bem claro
+            return ["background-color: #f9f5ff;"] * len(col)
         return [""] * len(col)
 
     styler = styler.apply(color_block, axis=0)
 
-    # Estilo das diferenças: célula inteira verde/vermelha, fonte branca
+    # Estilo dos Δ
     def cor_diferenca(val):
         if pd.isna(val):
             return ""
@@ -738,15 +709,12 @@ else:
             return "background-color: #e74c3c; color: white; font-weight:600;"
         return ""
 
+    subset_diff = [c for c in ["Δ Viveiros Total", "Δ Viveiros Cheio", "Δ Área (ha)", "Δ Profundidade (m)"] if c in df_exibir.columns]
+
     if subset_diff:
         styler = styler.applymap(cor_diferenca, subset=subset_diff)
 
-    st.dataframe(
-        styler,
-        use_container_width=True,
-        height=300
-    )
-
+    st.dataframe(styler, use_container_width=True, height=300)
 
 
 # =============================
