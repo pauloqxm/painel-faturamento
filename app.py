@@ -645,7 +645,7 @@ else:
     if diff_cols:
         alertas_df["Tipo Divergência"] = alertas_df.apply(classifica_linha, axis=1)
 
-    # Filtro por tipo (agora compatível com os valores da coluna)
+    # Filtro por tipo (valores batendo com a coluna)
     filtro_tipo = st.radio(
         "Filtrar divergências",
         ["Todas", "Positiva", "Negativa", "Mista"],
@@ -656,7 +656,7 @@ else:
     if filtro_tipo != "Todas":
         df_exibir = df_exibir[df_exibir["Tipo Divergência"] == filtro_tipo]
 
-    # Criar colunas de diferença (mantendo valores brutos; formatação vem depois)
+    # Criar colunas de diferença
     if "diff_viv_total" in df_exibir.columns:
         df_exibir["Δ Viveiros Total"] = df_exibir["diff_viv_total"]
     if "diff_viv_cheio" in df_exibir.columns:
@@ -696,20 +696,11 @@ else:
         ] if c in df_exibir.columns
     ]
 
-    # Todas as numéricas com 2 casas decimais
+    # 🔢 Formatar apenas colunas numéricas com 2 casas decimais
     numeric_for_fmt = [
-        "Nº Viveiros total",
-        "Atual Viveiros Total",
-        "Nº Viveiros cheio",
-        "Atual Viveiros cheio",
-        "Área (ha).1",
-        "Atual Área (ha).1",
-        "Prof. Média  (m)",
-        "Atual Profun.",
-    ] + subset_diff
-
-    numeric_for_fmt = [c for c in numeric_for_fmt if c in df_exibir.columns]
-
+        c for c in cols_exist_alerta
+        if pd.api.types.is_numeric_dtype(df_exibir[c])
+    ]
     fmt = {c: "{:.2f}" for c in numeric_for_fmt}
 
     styler = df_exibir[cols_exist_alerta].style.format(fmt)
