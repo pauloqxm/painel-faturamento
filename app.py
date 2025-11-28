@@ -156,7 +156,29 @@ header {visibility: hidden;}
     background: #06d6a0;
 }
 
-/* CABEÇALHO DOS FILTROS */
+/* Wrapper estilizado dos filtros - TEMA CLARO */
+.tech-filter-wrapper {
+    background: radial-gradient(circle at top left, #eff6ff 0%, #ffffff 45%, #f8fafc 100%);
+    border-radius: 20px;
+    padding: 1.25rem 1.5rem 1.6rem 1.5rem;
+    margin: 1.5rem 0 1rem 0;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 12px 40px rgba(15,23,42,0.10);
+    position: relative;
+    overflow: hidden;
+}
+.tech-filter-wrapper::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(59,130,246,0.12), rgba(6,214,160,0.08));
+    opacity: 0.25;
+    pointer-events: none;
+}
+.tech-filter-inner {
+    position: relative;
+    z-index: 1;
+}
 .tech-filter-header {
     display: flex;
     align-items: center;
@@ -170,15 +192,15 @@ header {visibility: hidden;}
     gap: 0.8rem;
 }
 .tech-filter-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 14px;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #2563eb, #1e40af);
+    background: linear-gradient(135deg, #3b82f6, #1e40af);
     color: #ffffff;
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     box-shadow: 0 8px 20px rgba(37,99,235,0.45);
 }
 .tech-filter-text {
@@ -216,23 +238,12 @@ header {visibility: hidden;}
     box-shadow: 0 0 0 4px rgba(34,197,94,0.3);
 }
 
-/* Estiliza APENAS o container que contém .tech-filter-header */
-div[data-testid="stContainer"]:has(.tech-filter-header) {
-    background: radial-gradient(circle at top left, #eff6ff 0%, #ffffff 45%, #f8fafc 100%);
-    border-radius: 20px;
-    padding: 1.25rem 1.5rem 1.6rem 1.5rem;
-    margin: 1.5rem 0 1rem 0;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 12px 40px rgba(15,23,42,0.10);
-}
-
-/* Pequeno bloco interno para os widgets (linha branca) */
-.tech-filter-section-inner {
-    background: rgba(255,255,255,0.95);
+/* Filtros modernos - bloco interno - TEMA CLARO */
+.tech-filter-section {
+    background: rgba(255,255,255,0.9);
     border-radius: 14px;
-    padding: 0.9rem 0.9rem 0.4rem 0.9rem;
-    border: 1px solid rgba(226,232,240,0.8);
-    margin-top: 0.4rem;
+    padding: 1rem 1rem 0.4rem 1rem;
+    border: 1px solid rgba(226,232,240,0.7);
 }
 
 /* Status indicators */
@@ -588,6 +599,7 @@ if df.empty:
     st.info("📋 Planilha sem dados disponíveis.")
     st.stop()
 
+# Substitui NaN por None
 df = df.replace({np.nan: None})
 
 # =============================
@@ -613,23 +625,31 @@ for col in numeric_cols_csv:
 # =============================
 # Preparação de datas para filtros
 # =============================
+
 def parse_data_filtro(v):
+    """Converte string tipo 2025/11/04 11:22:03.951+00 em datetime no fuso de Fortaleza."""
     if v is None or (isinstance(v, float) and math.isnan(v)):
         return pd.NaT
     s = str(v).strip()
     if s == "" or s.lower() in ("nan", "nat", "none"):
         return pd.NaT
+
+    # normaliza separador
     s = s.replace("/", "-")
+
+    # garante timezone no formato +HH:MM (se vier só +00, vira +00:00)
     m = re.search(r"\+\d{2}(:\d{2})?$", s)
     if m:
         tz_part = m.group(0)
         if ":" not in tz_part:
             s = s.replace(tz_part, tz_part + ":00")
+
     try:
         dt = datetime.strptime(s, "%Y-%m-%d %H:%M:%S.%f%z")
         return dt.astimezone(TZ)
     except Exception:
         pass
+
     try:
         dt = pd.to_datetime(s, errors="coerce", utc=True)
         if pd.isna(dt):
@@ -640,10 +660,12 @@ def parse_data_filtro(v):
     except Exception:
         return pd.NaT
 
+# Usa diretamente a coluna "Data"
 if "Data" in df.columns:
     df["_Data_dt"] = df["Data"].apply(parse_data_filtro)
     df["Ano_filtro"] = df["_Data_dt"].dt.year
     df["Mes_filtro_num"] = df["_Data_dt"].dt.month
+
     meses_map = {
         1: "Jan", 2: "Fev", 3: "Mar", 4: "Abr",
         5: "Mai", 6: "Jun", 7: "Jul", 8: "Ago",
@@ -656,33 +678,35 @@ else:
     df["Mes_filtro"] = None
 
 # =============================
-# Filtros Modernizados dentro do retângulo
+# Filtros Modernizados (retângulo estilizado)
 # =============================
 with st.container():
     st.markdown(
         """
-        <div class="tech-filter-header tech-fade-in">
-          <div class="tech-filter-header-left">
-            <div class="tech-filter-icon">🔍</div>
-            <div class="tech-filter-text">
-              <div class="tech-filter-title">Filtros de pesquisa</div>
-              <div class="tech-filter-subtitle">
-                Refine os dados por período, ocorrência e unidade monitorada
+        <div class="tech-filter-wrapper tech-fade-in">
+          <div class="tech-filter-inner">
+            <div class="tech-filter-header">
+              <div class="tech-filter-header-left">
+                <div class="tech-filter-icon">🔍</div>
+                <div class="tech-filter-text">
+                  <div class="tech-filter-title">Filtros de pesquisa</div>
+                  <div class="tech-filter-subtitle">
+                    Refine os dados por período, ocorrência e unidade monitorada
+                  </div>
+                </div>
+              </div>
+              <div class="tech-filter-chip">
+                Filtro aplicado em tempo real
               </div>
             </div>
-          </div>
-          <div class="tech-filter-chip">
-            Filtro aplicado em tempo real
-          </div>
-        </div>
+            <div class="tech-filter-section">
         """,
         unsafe_allow_html=True,
     )
 
-    st.markdown('<div class="tech-filter-section-inner">', unsafe_allow_html=True)
+    col_f1, col_f2, col_f3 = st.columns([1.2, 1.2, 1.6])
 
-    col_f1, col_f2, col_f3 = st.columns([1.1, 1.1, 1.8])
-
+    # Ano (Data Filtro) – com botão para ativar
     with col_f1:
         anos_lista = (
             sorted(df["Ano_filtro"].dropna().unique().tolist())
@@ -703,6 +727,7 @@ with st.container():
             use_filter_ano = False
             ano_sel = []
 
+    # Mês (Data Filtro) – com botão para ativar
     with col_f2:
         meses_lista = (
             [m for m in df["Mes_filtro"].dropna().unique().tolist()]
@@ -711,8 +736,18 @@ with st.container():
         )
         if meses_lista:
             ordem_meses = [
-                "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
-                "Jul", "Ago", "Set", "Out", "Nov", "Dez",
+                "Jan",
+                "Fev",
+                "Mar",
+                "Abr",
+                "Mai",
+                "Jun",
+                "Jul",
+                "Ago",
+                "Set",
+                "Out",
+                "Nov",
+                "Dez",
             ]
             meses_lista = sorted(meses_lista, key=lambda x: ordem_meses.index(x))
             use_filter_mes = st.toggle("🗓️ Filtrar Mês", value=False)
@@ -728,13 +763,14 @@ with st.container():
             use_filter_mes = False
             mes_sel = []
 
+    # Busca por código ou nome
     with col_f3:
         search_text = st.text_input(
             "🔎 Buscar por CÓDIGO ou Nome",
             placeholder="Digite parte do código ou do nome",
         )
 
-    col_f4, col_f5 = st.columns([1.6, 1])
+    col_f4, col_f5 = st.columns(2)
 
     with col_f4:
         ocorr_opts = sorted(
@@ -753,33 +789,46 @@ with st.container():
         )
 
     with col_f5:
-        st.write("")  # espaço para futuro (ex: botão reset)
+        pass
 
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown(
+        """
+            </div> <!-- .tech-filter-section -->
+          </div>   <!-- .tech-filter-inner -->
+        </div>     <!-- .tech-filter-wrapper -->
+        """,
+        unsafe_allow_html=True,
+    )
 
 # =============================
 # Aplicação dos filtros
 # =============================
 fdf = df.copy()
 
-if "Ano_filtro" in fdf.columns and 'use_filter_ano' in locals():
-    if use_filter_ano and anos_lista and ano_sel:
-        fdf = fdf[fdf["Ano_filtro"].isin(ano_sel)]
+# Ano: só filtra se o toggle estiver ligado e houver seleção
+if "Ano_filtro" in fdf.columns:
+    if 'use_filter_ano' in locals() and anos_lista and ano_sel:
+        if use_filter_ano and ano_sel:
+            fdf = fdf[fdf["Ano_filtro"].isin(ano_sel)]
 
-if "Mes_filtro" in fdf.columns and 'use_filter_mes' in locals():
-    if use_filter_mes and meses_lista and mes_sel:
-        fdf = fdf[fdf["Mes_filtro"].isin(mes_sel)]
+# Mês: só filtra se o toggle estiver ligado e houver seleção
+if "Mes_filtro" in fdf.columns:
+    if 'use_filter_mes' in locals() and meses_lista and mes_sel:
+        if use_filter_mes and mes_sel:
+            fdf = fdf[fdf["Mes_filtro"].isin(mes_sel)]
 
+# Ocorrências
 if ocorr_sel and "Ocorrências" in fdf.columns:
     fdf = fdf[fdf["Ocorrências"].isin(ocorr_sel)]
 
+# Busca por texto
 if search_text:
     txt = search_text.strip().lower()
     mask = pd.Series([False] * len(fdf))
     if "CÓDIGO" in fdf.columns:
-        mask |= fdf["CÓDIGO"].astype(str).str.lower().str.contains(txt, na=False)
+        mask = mask | fdf["CÓDIGO"].astype(str).str.lower().str.contains(txt, na=False)
     if "Nome" in fdf.columns:
-        mask |= fdf["Nome"].astype(str).str.lower().str.contains(txt, na=False)
+        mask = mask | fdf["Nome"].astype(str).str.lower().str.contains(txt, na=False)
     fdf = fdf[mask]
 
 # =============================
@@ -819,7 +868,7 @@ if {"Prof. Média  (m)_num", "Atual Profun._num"}.issubset(fdf.columns):
 
 div_mask = pd.Series([False] * len(fdf))
 for c in diff_cols:
-    div_mask |= (fdf[c].fillna(0) != 0)
+    div_mask = div_mask | (fdf[c].fillna(0) != 0)
 
 alertas_df = fdf[div_mask].copy()
 
@@ -834,6 +883,7 @@ total_unidades = len(base_df)
 total_viveiros_total = base_df.get("Atual Viveiros Total_num", pd.Series(dtype=float)).fillna(0).sum()
 total_viveiros_cheio = base_df.get("Atual Viveiros cheio_num", pd.Series(dtype=float)).fillna(0).sum()
 total_area = base_df.get("Atual Área (ha).1_num", pd.Series(dtype=float)).fillna(0).sum()
+total_alertas = len(alertas_df)
 
 k1, k2, k3, k4 = st.columns(4)
 
