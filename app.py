@@ -879,15 +879,23 @@ with col_map:
         if "Atual Viveiros Total_num" in fdf.columns and lat_col and lon_col:
             heat_rows = []
             for _, row in fdf.iterrows():
-                lat = to_float(row.get(lat_col))
-                lon = to_float(row.get(lon_col))
+                lat_raw = row.get(lat_col)
+                lon_raw = row.get(lon_col)
                 value = row.get("Atual Viveiros Total_num")
-                if (
+
+                lat = to_float(lat_raw)
+                lon = to_float(lon_raw)
+
+                invalid_coord = (
                     lat is None or lon is None or
-                    pd.isna(value) or value <= 0
-                ):
+                    (isinstance(lat, float) and math.isnan(lat)) or
+                    (isinstance(lon, float) and math.isnan(lon))
+                )
+
+                if invalid_coord or pd.isna(value) or value <= 0:
                     continue
-                heat_rows.append([lat, lon, float(value)])
+
+                heat_rows.append([float(lat), float(lon), float(value)])
 
             if heat_rows:
                 fg_heat = folium.FeatureGroup(name="Mapa de calor (viveiros)", show=False)
