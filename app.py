@@ -31,144 +31,241 @@ st.set_page_config(
 TZ = ZoneInfo("America/Fortaleza")
 
 # =============================
-# Estilos Modernizados
+# Estilos Técnicos Modernos
 # =============================
 st.markdown("""
 <style>
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
+header {visibility: hidden;}
 
-/* Header moderno com gradiente sofisticado */
-.app-header {
-    background: linear-gradient(135deg, #0c2461 0%, #1e3799 25%, #4a69bd 50%, #6a89cc 100%);
+/* Dashboard moderno com tema técnico */
+.main {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+
+/* Header técnico com gradiente profissional */
+.tech-header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e40af 50%, #3b82f6 100%);
     padding: 2.5rem 2.5rem 2rem 2.5rem;
     border-radius: 0 0 24px 24px;
     margin: -1rem -1rem 2.5rem -1rem;
     color: white;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
     position: relative;
     overflow: hidden;
+    border-bottom: 3px solid #06d6a0;
 }
-.app-header::before {
+.tech-header::before {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #00b894, #0984e3, #00cec9);
+    background: linear-gradient(90deg, #06d6a0, #3b82f6, #ef476f);
 }
-.app-header h1 {
+.tech-header h1 {
     margin: 0;
-    font-size: 2.4rem;
+    font-size: 2.6rem;
     font-weight: 800;
     background: linear-gradient(135deg, #ffffff 0%, #e0f7fa 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     letter-spacing: -0.5px;
+    font-family: 'Segoe UI', system-ui, sans-serif;
 }
-.app-header p {
+.tech-header p {
     margin: 0.8rem 0 0 0;
-    font-size: 1.15rem;
+    font-size: 1.2rem;
     opacity: 0.9;
     font-weight: 400;
+    font-family: 'Segoe UI', system-ui, sans-serif;
 }
 
-/* Cards KPI modernos com hover */
-.kpi-card {
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-    border-radius: 20px;
+/* Cards KPI técnicos com design de instrumentação */
+.tech-kpi-card {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border-radius: 16px;
     padding: 1.5rem 1.2rem;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    border: 1px solid rgba(255,255,255,0.8);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.1);
     backdrop-filter: blur(10px);
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+    border-left: 4px solid #06d6a0;
 }
-.kpi-card::before {
+.tech-kpi-card::before {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #00b894, #0984e3);
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.5), transparent);
 }
-.kpi-card:hover {
+.tech-kpi-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+    border-left-color: #3b82f6;
 }
-.kpi-label {
-    font-size: 0.85rem;
+.tech-kpi-label {
+    font-size: 0.8rem;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #636e72;
+    letter-spacing: 0.1em;
+    color: #94a3b8;
     margin-bottom: 0.5rem;
     font-weight: 600;
+    font-family: 'Segoe UI', system-ui, sans-serif;
 }
-.kpi-value {
-    font-size: 2rem;
+.tech-kpi-value {
+    font-size: 2.2rem;
     font-weight: 800;
-    color: #2d3436;
+    color: #f8fafc;
     margin-bottom: 0.3rem;
-    background: linear-gradient(135deg, #2d3436 0%, #636e72 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
-.kpi-sub {
-    font-size: 0.8rem;
-    color: #b2bec3;
+.tech-kpi-sub {
+    font-size: 0.75rem;
+    color: #64748b;
     font-weight: 500;
+    font-family: 'Segoe UI', system-ui, sans-serif;
 }
 
-/* Seções modernas */
-.section-title {
+/* Seções com design técnico */
+.tech-section-title {
     font-weight: 700;
-    font-size: 1.3rem;
-    margin: 1rem 0 1.2rem 0;
-    color: #2d3436;
-    padding-bottom: 0.5rem;
-    border-bottom: 3px solid #0984e3;
+    font-size: 1.4rem;
+    margin: 2rem 0 1.5rem 0;
+    color: #f1f5f9;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #3b82f6;
     display: inline-block;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    position: relative;
+}
+.tech-section-title::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 60px;
+    height: 2px;
+    background: #06d6a0;
 }
 
-/* Container principal */
-.main {
-    background: #f8f9fa;
+/* Filtros modernos */
+.tech-filter-section {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+/* Status indicators */
+.status-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+.status-online { background: #06d6a0; }
+.status-warning { background: #f59e0b; }
+.status-alert { background: #ef476f; }
+
+/* Badges técnicas */
+.tech-badge {
+    background: linear-gradient(135deg, #3b82f6, #1e40af);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
 }
 
 /* Animações suaves */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
 }
-.fade-in {
-    animation: fadeIn 0.5s ease-in-out;
+.tech-fade-in {
+    animation: fadeInUp 0.6s ease-out;
 }
 
 /* Scrollbar personalizada */
 ::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
 }
 ::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: #1e293b;
     border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #74b9ff, #0984e3);
+    background: linear-gradient(135deg, #3b82f6, #06d6a0);
     border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, #0984e3, #074b83);
+    background: linear-gradient(135deg, #06d6a0, #3b82f6);
+}
+
+/* Container principal com gradiente sutil */
+.stApp {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+
+/* Melhorias nos componentes do Streamlit */
+.stButton button {
+    background: linear-gradient(135deg, #3b82f6, #1e40af) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 12px !important;
+    padding: 0.5rem 1.5rem !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+}
+.stButton button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4) !important;
+}
+
+.stDataFrame {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* Cards de alerta modernos */
+.alert-card {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 16px;
+    margin: 1rem 0;
+    border-left: 4px solid #f87171;
+    box-shadow: 0 8px 32px rgba(220, 38, 38, 0.2);
+}
+.success-card {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 16px;
+    margin: 1rem 0;
+    border-left: 4px solid #34d399;
+    box-shadow: 0 8px 32px rgba(5, 150, 105, 0.2);
 }
 </style>
 """, unsafe_allow_html=True)
 
 # =============================
-# Funções auxiliares
+# Funções auxiliares (mantidas da versão original)
 # =============================
 def load_from_gsheet_csv(sheet_id: str, gid: str = "0", sep: str = ","):
     url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid={gid}"
@@ -225,7 +322,6 @@ def to_float(v):
     except Exception:
         return None
 
-# Galeria no modelo antigo, com auto_open
 def render_lightgallery_images(items: list, height_px=420, auto_open: bool = False):
     if not items:
         st.info("📷 Nenhuma foto encontrada para os filtros atuais.")
@@ -333,11 +429,11 @@ def make_popup_html(row):
         padding: 16px;
         min-width:280px;
         max-width:380px;
-        background: linear-gradient(135deg,#1e3799 0%,#0984e3 100%);
+        background: linear-gradient(135deg,#1e293b 0%,#334155 100%);
         border-radius: 20px;
         box-shadow: 0 12px 40px rgba(0,0,0,0.3);
         color: white;
-        border: 2px solid rgba(255,255,255,0.2);
+        border: 2px solid rgba(255,255,255,0.1);
         backdrop-filter: blur(10px);
     ">
         <div style="
@@ -358,31 +454,46 @@ def make_popup_html(row):
     return html
 
 # =============================
-# Header Modernizado
+# Header Técnico Moderno
 # =============================
 st.markdown("""
-<div class="app-header fade-in">
+<div class="tech-header tech-fade-in">
   <h1>🐟 Sistema de Monitoramento de Viveiros</h1>
-  <p>Análise em tempo quase real das unidades de viveiros cadastradas</p>
+  <p>Dashboard Técnico • Análise em tempo quase real das unidades de viveiros cadastradas</p>
 </div>
 """, unsafe_allow_html=True)
 
 # =============================
 # Barra de status e informações
 # =============================
-col_info1, col_info2, col_info3 = st.columns([2,1,1])
+col_info1, col_info2, col_info3, col_info4 = st.columns([2,1,1,1])
 
 with col_info1:
-    st.caption(
-        f"🕐 Última atualização: {datetime.now(TZ).strftime('%d/%m/%Y %H:%M')} "
-        f"(Horário de Fortaleza)"
-    )
+    st.markdown(f"""
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <span class="status-indicator status-online"></span>
+        <span style="color: #94a3b8; font-size: 0.9rem;">
+            🕐 Última atualização: {datetime.now(TZ).strftime('%d/%m/%Y %H:%M')} (Horário de Fortaleza)
+        </span>
+    </div>
+    """, unsafe_allow_html=True)
 
 with col_info2:
-    st.caption("📊 Dados sincronizados via Google Sheets")
+    st.markdown("""
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <span class="tech-badge">📊 Dados Sincronizados</span>
+    </div>
+    """, unsafe_allow_html=True)
 
 with col_info3:
-    if st.button("🔄 Atualizar Dados"):
+    st.markdown("""
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <span class="tech-badge">🔗 Google Sheets</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col_info4:
+    if st.button("🔄 Atualizar Dados", use_container_width=True):
         st.rerun()
 
 # =============================
@@ -480,32 +591,19 @@ else:
     df["Ano_filtro"] = None
     df["Mes_filtro"] = None
 
-
 # =============================
 # Filtros Modernizados
 # =============================
 st.markdown("### 🔍 Filtros de Pesquisa")
 
-# listas base para ano/mês/ocorrências
-anos_lista = []
-if "Ano_filtro" in df.columns:
-    anos_lista = sorted(df["Ano_filtro"].dropna().unique().tolist())
-
-meses_lista = []
-if "Mes_filtro" in df.columns:
-    meses_lista = [m for m in df["Mes_filtro"].dropna().unique().tolist()]
-    if meses_lista:
-        ordem_meses = ["Jan","Fev","Mar","Abr","Mai","Jun",
-                       "Jul","Ago","Set","Out","Nov","Dez"]
-        meses_lista = sorted(meses_lista, key=lambda x: ordem_meses.index(x))
-
-ocorr_opts = sorted([o for o in df.get("Ocorrências", pd.Series()).dropna().unique().tolist()])
-
-with st.expander("Filtros avançados", expanded=True):
+with st.container():
+    st.markdown('<div class="tech-filter-section">', unsafe_allow_html=True)
+    
     col_f1, col_f2, col_f3 = st.columns([1.2, 1.2, 1.6])
 
     # Ano (Data Filtro) – com botão para ativar
     with col_f1:
+        anos_lista = sorted(df["Ano_filtro"].dropna().unique().tolist()) if "Ano_filtro" in df.columns else []
         if anos_lista:
             use_filter_ano = st.toggle("📅 Filtrar Ano", value=False)
             if use_filter_ano:
@@ -522,7 +620,11 @@ with st.expander("Filtros avançados", expanded=True):
 
     # Mês (Data Filtro) – com botão para ativar
     with col_f2:
+        meses_lista = [m for m in df["Mes_filtro"].dropna().unique().tolist()] if "Mes_filtro" in df.columns else []
         if meses_lista:
+            ordem_meses = ["Jan","Fev","Mar","Abr","Mai","Jun",
+                           "Jul","Ago","Set","Out","Nov","Dez"]
+            meses_lista = sorted(meses_lista, key=lambda x: ordem_meses.index(x))
             use_filter_mes = st.toggle("🗓️ Filtrar Mês", value=False)
             if use_filter_mes:
                 mes_sel = st.multiselect(
@@ -546,6 +648,7 @@ with st.expander("Filtros avançados", expanded=True):
     col_f4, col_f5 = st.columns(2)
 
     with col_f4:
+        ocorr_opts = sorted([o for o in df.get("Ocorrências", pd.Series()).dropna().unique().tolist()])
         ocorr_sel = st.multiselect(
             "⚠️ Filtrar Ocorrências",
             options=ocorr_opts,
@@ -554,6 +657,8 @@ with st.expander("Filtros avançados", expanded=True):
 
     with col_f5:
         pass
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # =============================
 # Aplicação dos filtros
@@ -624,7 +729,7 @@ for c in diff_cols:
 alertas_df = fdf[div_mask].copy()
 
 # =============================
-# KPIs
+# KPIs Técnicos
 # =============================
 st.markdown("### 📈 Indicadores Principais")
 
@@ -634,16 +739,17 @@ total_unidades = len(base_df)
 total_viveiros_total = base_df.get("Atual Viveiros Total_num", pd.Series(dtype=float)).fillna(0).sum()
 total_viveiros_cheio = base_df.get("Atual Viveiros cheio_num", pd.Series(dtype=float)).fillna(0).sum()
 total_area = base_df.get("Atual Área (ha).1_num", pd.Series(dtype=float)).fillna(0).sum()
+total_alertas = len(alertas_df)
 
 k1, k2, k3, k4 = st.columns(4)
 
 with k1:
     st.markdown(
         f"""
-        <div class="kpi-card fade-in">
-          <div class="kpi-label">Unidades de viveiros</div>
-          <div class="kpi-value">{int(total_unidades)}</div>
-          <div class="kpi-sub">Registros após filtros</div>
+        <div class="tech-kpi-card tech-fade-in">
+          <div class="tech-kpi-label">Unidades Monitoradas</div>
+          <div class="tech-kpi-value">{int(total_unidades)}</div>
+          <div class="tech-kpi-sub">Registros ativos no sistema</div>
         </div>
         """,
         unsafe_allow_html=True
@@ -652,12 +758,12 @@ with k1:
 with k2:
     st.markdown(
         f"""
-        <div class="kpi-card fade-in">
-          <div class="kpi-label">Viveiros cadastrados</div>
-          <div class="kpi-value">
+        <div class="tech-kpi-card tech-fade-in">
+          <div class="tech-kpi-label">Viveiros Cadastrados</div>
+          <div class="tech-kpi-value">
             {total_viveiros_total:,.0f}
           </div>
-          <div class="kpi-sub">Soma de "Atual Viveiros Total"</div>
+          <div class="tech-kpi-sub">Total de viveiros ativos</div>
         </div>
         """.replace(",", "X").replace(".", ",").replace("X", "."),
         unsafe_allow_html=True
@@ -666,12 +772,12 @@ with k2:
 with k3:
     st.markdown(
         f"""
-        <div class="kpi-card fade-in">
-          <div class="kpi-label">Viveiros cheios</div>
-          <div class="kpi-value">
+        <div class="tech-kpi-card tech-fade-in">
+          <div class="tech-kpi-label">Viveiros Operantes</div>
+          <div class="tech-kpi-value">
             {total_viveiros_cheio:,.0f}
           </div>
-          <div class="kpi-sub">Soma de "Atual Viveiros cheio"</div>
+          <div class="tech-kpi-sub">Viveiros em plena operação</div>
         </div>
         """.replace(",", "X").replace(".", ",").replace("X", "."),
         unsafe_allow_html=True
@@ -680,12 +786,12 @@ with k3:
 with k4:
     st.markdown(
         f"""
-        <div class="kpi-card fade-in">
-          <div class="kpi-label">Área total atual</div>
-          <div class="kpi-value">
-            {total_area:,.1f} ha
+        <div class="tech-kpi-card tech-fade-in">
+          <div class="tech-kpi-label">Área Total</div>
+          <div class="tech-kpi-value">
+            {total_area:,.1f}<span style="font-size: 1rem;"> ha</span>
           </div>
-          <div class="kpi-sub">Soma de "Atual Área (ha).1"</div>
+          <div class="tech-kpi-sub">Área total em hectares</div>
         </div>
         """.replace(",", "X").replace(".", ",").replace("X", "."),
         unsafe_allow_html=True
@@ -694,15 +800,32 @@ with k4:
 # =============================
 # Alertas de divergência
 # =============================
-st.markdown("### 🚨 Alertas de divergência entre dados previstos e atuais")
+st.markdown("### 🚨 Alertas de Divergência")
 
 if alertas_df.empty:
-    st.success("Nenhuma divergência relevante encontrada entre os valores originais e os valores atuais.")
+    st.markdown("""
+    <div class="success-card">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 1.5rem;">✅</span>
+            <div>
+                <h4 style="margin: 0; color: white;">Sistema Estável</h4>
+                <p style="margin: 0; opacity: 0.9;">Nenhuma divergência relevante encontrada entre os valores originais e os valores atuais.</p>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 else:
-    st.warning(
-        f"Foram encontradas {len(alertas_df)} unidades com diferença entre dados originais e dados atuais. "
-        "Revise estas unidades com atenção."
-    )
+    st.markdown(f"""
+    <div class="alert-card">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 1.5rem;">⚠️</span>
+            <div>
+                <h4 style="margin: 0; color: white;">Alertas Identificados</h4>
+                <p style="margin: 0; opacity: 0.9;">Foram encontradas {len(alertas_df)} unidades com diferença entre dados originais e dados atuais. Revise estas unidades com atenção.</p>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     def classifica_linha(row):
         pos = False
@@ -807,13 +930,13 @@ else:
         if name in subset_diff:
             return [""] * len(col)
         if name in bloco_viv_total:
-            return ["background-color: #f8fafc;"] * len(col)
+            return ["background-color: rgba(59, 130, 246, 0.1);"] * len(col)
         if name in bloco_viv_cheio:
-            return ["background-color: #f4fbf6;"] * len(col)
+            return ["background-color: rgba(6, 214, 160, 0.1);"] * len(col)
         if name in bloco_area:
-            return ["background-color: #fffaf0;"] * len(col)
+            return ["background-color: rgba(245, 158, 11, 0.1);"] * len(col)
         if name in bloco_prof:
-            return ["background-color: #f9f5ff;"] * len(col)
+            return ["background-color: rgba(139, 92, 246, 0.1);"] * len(col)
         return [""] * len(col)
 
     styler = styler.apply(color_block, axis=0)
@@ -822,9 +945,9 @@ else:
         if pd.isna(val):
             return ""
         if val > 0:
-            return "background-color: #27ae60; color: white; font-weight:600;"
+            return "background-color: #059669; color: white; font-weight:600;"
         if val < 0:
-            return "background-color: #e74c3c; color: white; font-weight:600;"
+            return "background-color: #dc2626; color: white; font-weight:600;"
         return ""
 
     if subset_diff:
@@ -840,7 +963,7 @@ else:
 # Layout Mapa + Fotos
 # =============================
 st.markdown("---")
-st.markdown('<div class="section-title">🗺️ Visualização Geográfica</div>', unsafe_allow_html=True)
+st.markdown('<div class="tech-section-title">🗺️ Visualização Geográfica</div>', unsafe_allow_html=True)
 
 col_map, col_fotos = st.columns([1.2, 1])
 
@@ -875,9 +998,9 @@ with col_map:
             [str(o) for o in fdf.get("Ocorrências", pd.Series()).dropna().unique().tolist()]
         )
         palette = [
-            "#0984e3", "#00b894", "#e17055", "#6c5ce7",
-            "#d63031", "#fdcb6e", "#2d3436", "#ff7675",
-            "#00cec9", "#6c5ce7"
+            "#3b82f6", "#06d6a0", "#ef476f", "#8b5cf6",
+            "#f59e0b", "#84cc16", "#6366f1", "#ec4899",
+            "#14b8a6", "#f97316"
         ]
         ocorr_colors = {o: palette[i % len(palette)] for i, o in enumerate(ocorr_vals)}
 
@@ -891,7 +1014,7 @@ with col_map:
                 continue
 
             ocorr = str(row.get("Ocorrências", "") or "")
-            color = ocorr_colors.get(ocorr, "#0984e3")
+            color = ocorr_colors.get(ocorr, "#3b82f6")
 
             popup_html = make_popup_html(row)
             popup = folium.Popup(popup_html, max_width=380)
@@ -967,7 +1090,7 @@ with col_map:
         else:
             legend_items_html = """
             <div style="display:flex;align-items:center;margin-bottom:4px;">
-              <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#0984e3;margin-right:6px;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.3);"></span>Unidade cadastrada
+              <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#3b82f6;margin-right:6px;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.3);"></span>Unidade cadastrada
             </div>
             """
 
@@ -978,16 +1101,17 @@ with col_map:
             bottom: 40px;
             left: 10px;
             z-index: 9999;
-            background: rgba(255,255,255,0.95);
+            background: rgba(30, 41, 59, 0.95);
             padding: 12px 16px;
-            border: 1px solid #ddd;
+            border: 1px solid rgba(255,255,255,0.1);
             border-radius: 16px;
             font-size: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
             backdrop-filter: blur(10px);
             font-family: 'Segoe UI', system-ui, sans-serif;
+            color: white;
         ">
-          <div id="legend-viveiros-header" style="font-weight:700; margin-bottom:6px; color:#2d3436; font-size:13px; cursor:pointer;"
+          <div id="legend-viveiros-header" style="font-weight:700; margin-bottom:6px; color:#f1f5f9; font-size:13px; cursor:pointer;"
                onclick="
                  var body = document.getElementById('legend-viveiros-body');
                  if (body.style.display === 'none') {
@@ -1002,7 +1126,7 @@ with col_map:
           </div>
           <div id="legend-viveiros-body" style="margin-top:4px;">
         """ + legend_items_html + """
-            <div style="font-size:11px;color:#636e72;margin-top:4px;">
+            <div style="font-size:11px;color:#94a3b8;margin-top:4px;">
               Cores por categoria de ocorrência.
             </div>
           </div>
@@ -1088,7 +1212,7 @@ with col_fotos:
 # Gráficos de Ocorrências
 # =============================
 st.markdown("---")
-st.markdown('<div class="section-title">📊 Análise de Ocorrências</div>', unsafe_allow_html=True)
+st.markdown('<div class="tech-section-title">📊 Análise de Ocorrências</div>', unsafe_allow_html=True)
 
 col_g1, col_g2 = st.columns(2)
 
@@ -1118,6 +1242,12 @@ with col_g1:
                 )
                 .properties(height=300, title="Distribuição por tipo de ocorrência")
                 .configure_title(fontSize=16, font="Segoe UI", anchor="middle")
+                .configure_axis(
+                    labelColor='#94a3b8',
+                    titleColor='#94a3b8',
+                    gridColor='#334155'
+                )
+                .configure_view(stroke='transparent')
             )
             st.altair_chart(chart, use_container_width=True)
     else:
@@ -1150,6 +1280,12 @@ with col_g2:
                 )
                 .properties(height=300, title="Ocorrências por ano")
                 .configure_title(fontSize=16, font="Segoe UI", anchor="middle")
+                .configure_axis(
+                    labelColor='#94a3b8',
+                    titleColor='#94a3b8',
+                    gridColor='#334155'
+                )
+                .configure_view(stroke='transparent')
             )
             st.altair_chart(chart, use_container_width=True)
     else:
@@ -1159,7 +1295,7 @@ with col_g2:
 # Tabela Detalhada
 # =============================
 st.markdown("---")
-st.markdown('<div class="section-title">📋 Relatório Detalhado</div>', unsafe_allow_html=True)
+st.markdown('<div class="tech-section-title">📋 Relatório Detalhado</div>', unsafe_allow_html=True)
 
 cols_tabela = [
     "CÓDIGO", "Nome", "Ocorrências",
@@ -1180,16 +1316,17 @@ st.dataframe(
 )
 
 # =============================
-# Footer
+# Footer Técnico
 # =============================
 st.markdown("---")
 st.markdown("""
-<div style="text-align:center; padding: 2rem 1rem; color: #636e72;">
+<div style="text-align:center; padding: 2rem 1rem; color: #64748b;">
     <div style="font-size: 0.9rem; margin-bottom: 0.5rem;">
-        🐟 <strong>Sistema de Monitoramento de Viveiros</strong>
+        🐟 <strong>Sistema de Monitoramento de Viveiros</strong> • Dashboard Técnico
     </div>
     <div style="font-size: 0.8rem; opacity: 0.8;">
         Desenvolvido para apoiar a gestão, a fiscalização e a tomada de decisão com base em dados atualizados.
+        <br>Interface técnica otimizada para análise profissional.
     </div>
 </div>
 """, unsafe_allow_html=True)
