@@ -402,7 +402,28 @@ if df.empty:
     st.info("📋 Planilha sem dados disponíveis.")
     st.stop()
 
+# Substitui NaN por None
 df = df.replace({np.nan: None})
+
+# =============================
+# Tratamento global de números vindos do CSV
+# =============================
+numeric_cols_csv = [
+    "Nº Viveiros total",
+    "Atual Viveiros Total",
+    "Nº Viveiros cheio",
+    "Atual Viveiros cheio",
+    "Área (ha).1",
+    "Atual Área (ha).1",
+    "Prof. Média  (m)",
+    "Atual Profun.",
+    "Lati",
+    "Long",
+]
+
+for col in numeric_cols_csv:
+    if col in df.columns:
+        df[col] = df[col].apply(to_number)
 
 # =============================
 # Preparação de datas para filtros
@@ -509,12 +530,19 @@ if search_text:
 # =============================
 # Cálculo de alertas de divergência
 # =============================
-for col in ["Nº Viveiros total", "Atual Viveiros Total",
-            "Nº Viveiros cheio", "Atual Viveiros cheio",
-            "Área (ha).1", "Atual Área (ha).1",
-            "Prof. Média  (m)", "Atual Profun."]:
+for col in [
+    "Nº Viveiros total",
+    "Atual Viveiros Total",
+    "Nº Viveiros cheio",
+    "Atual Viveiros cheio",
+    "Área (ha).1",
+    "Atual Área (ha).1",
+    "Prof. Média  (m)",
+    "Atual Profun.",
+]:
     if col in fdf.columns:
-        fdf[col + "_num"] = fdf[col].apply(to_number)
+        fdf[col] = pd.to_numeric(fdf[col], errors="coerce")
+        fdf[col + "_num"] = fdf[col]
 
 diff_cols = []
 
@@ -762,8 +790,6 @@ else:
         use_container_width=True,
         height=300
     )
-
-
 
 # =============================
 # Layout Mapa + Fotos
@@ -1112,7 +1138,7 @@ st.markdown("""
     <div style="font-size: 0.9rem; margin-bottom: 0.5rem;">
         🐟 <strong>Sistema de Monitoramento de Viveiros</strong>
     </div>
-    <div style="font-size: 0.8rem; opacity: 0.8;">
+    <div style="font-size: 0.8rem; opacity: 0.8%;">
         Desenvolvido para apoiar a gestão, a fiscalização e a tomada de decisão com base em dados atualizados.
     </div>
 </div>
