@@ -437,10 +437,8 @@ def parse_data_filtro(v):
     if s == "" or s.lower() in ("nan", "nat", "none"):
         return pd.NaT
 
-    # normaliza separador de data
     s = s.replace("/", "-")
 
-    # garante timezone no formato +HH:MM (se vier só +00, vira +00:00)
     m = re.search(r"\+\d{2}(:\d{2})?$", s)
     if m:
         tz_part = m.group(0)
@@ -463,15 +461,9 @@ def parse_data_filtro(v):
     except Exception:
         return pd.NaT
 
-# Tenta localizar a coluna de data mesmo com espaços/variações
-date_col = None
-for c in df.columns:
-    if re.sub(r"\s+", "", str(c)).lower() == "datafiltro":
-        date_col = c
-        break
-
-if date_col is not None:
-    df["_Data_dt"] = df[date_col].apply(parse_data_filtro)
+# Usa diretamente a coluna "Data"
+if "Data" in df.columns:
+    df["_Data_dt"] = df["Data"].apply(parse_data_filtro)
     df["Ano_filtro"] = df["_Data_dt"].dt.year
     df["Mes_filtro_num"] = df["_Data_dt"].dt.month
 
@@ -485,6 +477,7 @@ else:
     df["_Data_dt"] = pd.NaT
     df["Ano_filtro"] = None
     df["Mes_filtro"] = None
+
 
 # =============================
 # Filtros Modernizados
