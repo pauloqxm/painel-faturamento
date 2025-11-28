@@ -598,73 +598,145 @@ else:
     df["Mes_filtro"] = None
 
 # =============================
-# Filtros Modernizados
+# Filtros Modernizados – Versão Avançada
 # =============================
-st.markdown("### 🔍 Filtros de Pesquisa")
 
-with st.container():
-    st.markdown('<div class="tech-filter-section">', unsafe_allow_html=True)
-    
-    col_f1, col_f2, col_f3 = st.columns([1.2, 1.2, 1.6])
+def render_filtros_painel(df: pd.DataFrame) -> pd.DataFrame:
 
-    # Ano (Data Filtro) – com botão para ativar
-    with col_f1:
-        anos_lista = sorted(df["Ano_filtro"].dropna().unique().tolist()) if "Ano_filtro" in df.columns else []
-        if anos_lista:
+    with st.container():
+        # Cabeçalho estilizado do card
+        st.markdown(
+            """
+            <div class="painel-filter-header">
+              <div class="painel-filter-header-left">
+                <div class="painel-filter-icon">🔍</div>
+                <div class="painel-filter-text">
+                  <div class="painel-filter-title">Filtros de pesquisa</div>
+                  <div class="painel-filter-subtitle">
+                    Refine os dados por período, ocorrência e unidade monitorada
+                  </div>
+                </div>
+              </div>
+              <div class="painel-filter-chip">
+                Filtro aplicado em tempo real
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        st.markdown('<div class="painel-filter-inner">', unsafe_allow_html=True)
+
+        col1, col2, col3 = st.columns([1.2, 1.2, 1.8])
+
+        # ----------------------------
+        # Ano
+        # ----------------------------
+        with col1:
+            anos = (
+                sorted(df["Ano_filtro"].dropna().unique().tolist())
+                if "Ano_filtro" in df.columns else []
+            )
+
             use_filter_ano = st.toggle("📅 Filtrar Ano", value=False)
-            if use_filter_ano:
+            if use_filter_ano and anos:
                 ano_sel = st.multiselect(
-                    "Ano (Data Filtro)",
-                    options=anos_lista,
-                    default=anos_lista
+                    "Ano",
+                    options=anos,
+                    default=anos
                 )
             else:
                 ano_sel = []
-        else:
-            use_filter_ano = False
-            ano_sel = []
 
-    # Mês (Data Filtro) – com botão para ativar
-    with col_f2:
-        meses_lista = [m for m in df["Mes_filtro"].dropna().unique().tolist()] if "Mes_filtro" in df.columns else []
-        if meses_lista:
-            ordem_meses = ["Jan","Fev","Mar","Abr","Mai","Jun",
-                           "Jul","Ago","Set","Out","Nov","Dez"]
-            meses_lista = sorted(meses_lista, key=lambda x: ordem_meses.index(x))
+        # ----------------------------
+        # Mês
+        # ----------------------------
+        with col2:
+            meses = (
+                df["Mes_filtro"].dropna().unique().tolist()
+                if "Mes_filtro" in df.columns else []
+            )
+
+            ordem = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"]
+            meses = sorted(meses, key=lambda x: ordem.index(x)) if meses else []
+
             use_filter_mes = st.toggle("🗓️ Filtrar Mês", value=False)
-            if use_filter_mes:
+            if use_filter_mes and meses:
                 mes_sel = st.multiselect(
-                    "Mês (Data Filtro)",
-                    options=meses_lista,
-                    default=meses_lista
+                    "Mês",
+                    options=meses,
+                    default=meses
                 )
             else:
                 mes_sel = []
-        else:
-            use_filter_mes = False
-            mes_sel = []
 
-    # Busca por código ou nome
-    with col_f3:
-        search_text = st.text_input(
-            "🔎 Buscar por CÓDIGO ou Nome",
-            placeholder="Digite parte do código ou do nome"
-        )
+        # ----------------------------
+        # Busca textual
+        # ----------------------------
+        with col3:
+            search_text = st.text_input(
+                "🔎 Buscar por CÓDIGO ou Nome",
+                placeholder="Digite parte do código ou nome"
+            )
 
-    col_f4, col_f5 = st.columns(2)
+        # ----------------------------
+        # Linha 2 – Ocorrências
+        # ----------------------------
+        col4, col5 = st.columns([1.5, 1])
 
-    with col_f4:
-        ocorr_opts = sorted([o for o in df.get("Ocorrências", pd.Series()).dropna().unique().tolist()])
-        ocorr_sel = st.multiselect(
-            "⚠️ Filtrar Ocorrências",
-            options=ocorr_opts,
-            default=ocorr_opts if ocorr_opts else None
-        )
+        with col4:
+            ocorr_opts = sorted(
+                [o for o in df.get("Ocorrências", pd.Series()).dropna().unique().tolist()]
+            )
 
-    with col_f5:
-        pass
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+            ocorr_sel = st.multiselect(
+                "⚠️ Ocorrências",
+                options=ocorr_opts,
+                default=ocorr_opts if ocorr_opts else None
+            )
+
+        with col5:
+            st.write(" ")
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # ========================================================
+    # APLICAÇÃO DOS FILTROS (blindado contra erros)
+    # ========================================================
+    fdf = df.copy()
+
+    # Ano
+    if use_filter_ano and ano_sel:
+        fdf = fdf[fdf["Ano_filtro"].isin(ano_sel)]
+
+    # Mês
+    if use_filter_mes and mes_sel:
+        fdf = fdf[fdf["Mes_filtro"].isin(mes_sel)]
+
+    # Ocorrências
+    if ocorr_sel and "Ocorrências" in fdf.columns:
+        fdf = fdf[fdf["Ocorrências"].isin(ocorr_sel)]
+
+    # Busca
+    if search_text.strip():
+        txt = search_text.lower().strip()
+        mask = pd.Series(False, index=fdf.index)
+
+        if "CÓDIGO" in fdf.columns:
+            mask |= fdf["CÓDIGO"].astype(str).str.lower().str.contains(txt, na=False)
+        if "Nome" in fdf.columns:
+            mask |= fdf["Nome"].astype(str).str.lower().str.contains(txt, na=False)
+
+        fdf = fdf[mask]
+
+    return fdf
+
+
+# =============================
+# CHAMA O FILTRO AQUI
+# =============================
+fdf = render_filtros_painel(df)
+
 
 # =============================
 # Aplicação dos filtros
