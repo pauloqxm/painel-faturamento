@@ -443,46 +443,39 @@ else:
     df["Mes_filtro"] = None
 
 # =============================
-# Filtros Modernizados
+# Preparação de datas para filtros
 # =============================
-st.markdown("### 🔍 Filtros de Pesquisa")
+if "Data Filtro" in df.columns:
+    # Garante string limpa
+    data_raw = df["Data Filtro"].astype(str).str.strip()
 
-with st.expander("Filtros avançados", expanded=True):
-    col_f1, col_f2, col_f3 = st.columns([1.2, 1.2, 1.6])
+    # Normaliza separador de data: 2025/11/04 -> 2025-11-04
+    data_norm = data_raw.str.replace("/", "-", regex=False)
 
-    # Ano (Data Filtro)
-    with col_f1:
-        anos = []
-        if "Ano_filtro" in df.columns:
-            anos = sorted([a for a in df["Ano_filtro"].dropna().unique().tolist()])
-        use_filter_ano = st.toggle("📅 Filtrar ano", value=False)
-        if use_filter_ano and anos:
-            ano_sel = st.multiselect(
-                "Ano (Data Filtro)",
-                options=anos,
-                default=anos
-            )
-        else:
-            ano_sel = None
+    # Converte levando em conta o fuso (+00 na string)
+    # Ex: 2025-11-04 11:22:03.951+00
+    dt = pd.to_datetime(data_norm, errors="coerce", utc=True)
 
-    # Mês (Data Filtro)
-    with col_f2:
-        meses = []
-        if "Mes_filtro" in df.columns:
-            meses = [m for m in df["Mes_filtro"].dropna().unique().tolist()]
-            if meses:
-                ordem_meses = ["Jan","Fev","Mar","Abr","Mai","Jun",
-                               "Jul","Ago","Set","Out","Nov","Dez"]
-                meses = sorted(meses, key=lambda x: ordem_meses.index(x))
-        use_filter_mes = st.toggle("🗓️ Filtrar mês", value=False)
-        if use_filter_mes and meses:
-            mes_sel = st.multiselect(
-                "Mês (Data Filtro)",
-                options=meses,
-                default=meses
-            )
-        else:
-            mes_sel = None
+    # Converte para horário de Fortaleza (se tiver timezone)
+    try:
+        dt_local = dt.dt.tz_convert(TZ)
+    except Exception:
+        dt_local = dt  # se vier sem tz, usa direto
+
+    df["_Data_dt"] = dt_local
+    df["Ano_filtro"] = df["_Data_dt"].dt.year
+    df["Mes_filtro_num"] = df["_Data_dt"].dt.month
+
+    meses_map = {
+        1: "Jan", 2: "Fev", 3: "Mar", 4: "Abr",
+        5: "Mai", 6: "Jun", 7: "Jul", 8: "Ago",
+        9: "Set", 10: "Out", 11: "Nov", 12: "Dez",
+    }
+    df["Mes_filtro"] = df["Mes_filtro_num"].map(meses_map)
+else:
+    df["Ano_filtro"] = None
+    df["Mes_filtro"] = None
+
 
     # Busca por código ou nome
     with col_f3:
