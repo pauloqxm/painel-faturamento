@@ -437,8 +437,10 @@ def parse_data_filtro(v):
     if s == "" or s.lower() in ("nan", "nat", "none"):
         return pd.NaT
 
+    # normaliza separador
     s = s.replace("/", "-")
 
+    # garante timezone no formato +HH:MM (se vier só +00, vira +00:00)
     m = re.search(r"\+\d{2}(:\d{2})?$", s)
     if m:
         tz_part = m.group(0)
@@ -502,26 +504,36 @@ ocorr_opts = sorted([o for o in df.get("Ocorrências", pd.Series()).dropna().uni
 with st.expander("Filtros avançados", expanded=True):
     col_f1, col_f2, col_f3 = st.columns([1.2, 1.2, 1.6])
 
-    # Ano (Data Filtro) – sempre visível, estilo multiselect
+    # Ano (Data Filtro) – com botão para ativar
     with col_f1:
         if anos_lista:
-            ano_sel = st.multiselect(
-                "📅 Ano (Data Filtro)",
-                options=anos_lista,
-                default=anos_lista
-            )
+            use_filter_ano = st.toggle("📅 Filtrar Ano", value=False)
+            if use_filter_ano:
+                ano_sel = st.multiselect(
+                    "Ano (Data Filtro)",
+                    options=anos_lista,
+                    default=anos_lista
+                )
+            else:
+                ano_sel = []
         else:
+            use_filter_ano = False
             ano_sel = []
 
-    # Mês (Data Filtro) – sempre visível
+    # Mês (Data Filtro) – com botão para ativar
     with col_f2:
         if meses_lista:
-            mes_sel = st.multiselect(
-                "🗓️ Mês (Data Filtro)",
-                options=meses_lista,
-                default=meses_lista
-            )
+            use_filter_mes = st.toggle("🗓️ Filtrar Mês", value=False)
+            if use_filter_mes:
+                mes_sel = st.multiselect(
+                    "Mês (Data Filtro)",
+                    options=meses_lista,
+                    default=meses_lista
+                )
+            else:
+                mes_sel = []
         else:
+            use_filter_mes = False
             mes_sel = []
 
     # Busca por código ou nome
@@ -548,17 +560,19 @@ with st.expander("Filtros avançados", expanded=True):
 # =============================
 fdf = df.copy()
 
-# Ano: só filtra se o usuário tirar algum ano (default é todos)
-if anos_lista and ano_sel and len(ano_sel) < len(anos_lista):
+# Ano: só filtra se o toggle estiver ligado e houver seleção
+if use_filter_ano and anos_lista and ano_sel:
     fdf = fdf[fdf["Ano_filtro"].isin(ano_sel)]
 
-# Mês: mesma lógica
-if meses_lista and mes_sel and len(mes_sel) < len(meses_lista):
+# Mês: só filtra se o toggle estiver ligado e houver seleção
+if use_filter_mes and meses_lista and mes_sel:
     fdf = fdf[fdf["Mes_filtro"].isin(mes_sel)]
 
+# Ocorrências
 if ocorr_sel and "Ocorrências" in fdf.columns:
     fdf = fdf[fdf["Ocorrências"].isin(ocorr_sel)]
 
+# Busca por texto
 if search_text:
     txt = search_text.strip().lower()
     mask = pd.Series([False] * len(fdf))
