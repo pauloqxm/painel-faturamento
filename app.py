@@ -156,18 +156,19 @@ header {visibility: hidden;}
     background: #06d6a0;
 }
 
-/* Wrapper estilizado dos filtros - TEMA CLARO */
-.tech-filter-wrapper {
+/* Container principal dos filtros */
+.filter-main-container {
     background: radial-gradient(circle at top left, #eff6ff 0%, #ffffff 45%, #f8fafc 100%);
     border-radius: 20px;
-    padding: 1.25rem 1.5rem 1.6rem 1.5rem;
+    padding: 1.5rem;
     margin: 1.5rem 0 1rem 0;
     border: 1px solid #e2e8f0;
     box-shadow: 0 12px 40px rgba(15,23,42,0.10);
     position: relative;
     overflow: hidden;
 }
-.tech-filter-wrapper::before {
+
+.filter-main-container::before {
     content: "";
     position: absolute;
     inset: 0;
@@ -175,23 +176,25 @@ header {visibility: hidden;}
     opacity: 0.25;
     pointer-events: none;
 }
-.tech-filter-inner {
-    position: relative;
-    z-index: 1;
-}
-.tech-filter-header {
+
+/* Header dos filtros */
+.filter-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    z-index: 2;
 }
-.tech-filter-header-left {
+
+.filter-header-left {
     display: flex;
     align-items: center;
     gap: 0.8rem;
 }
-.tech-filter-icon {
+
+.filter-icon {
     width: 36px;
     height: 36px;
     border-radius: 12px;
@@ -203,21 +206,25 @@ header {visibility: hidden;}
     font-size: 1.3rem;
     box-shadow: 0 8px 20px rgba(37,99,235,0.45);
 }
-.tech-filter-text {
+
+.filter-text {
     display: flex;
     flex-direction: column;
     gap: 2px;
 }
-.tech-filter-title {
+
+.filter-title {
     font-size: 1.05rem;
     font-weight: 700;
     color: #0f172a;
 }
-.tech-filter-subtitle {
+
+.filter-subtitle {
     font-size: 0.8rem;
     color: #64748b;
 }
-.tech-filter-chip {
+
+.filter-chip {
     font-size: 0.75rem;
     font-weight: 600;
     padding: 6px 12px;
@@ -229,7 +236,8 @@ header {visibility: hidden;}
     align-items: center;
     gap: 6px;
 }
-.tech-filter-chip::before {
+
+.filter-chip::before {
     content: "";
     width: 8px;
     height: 8px;
@@ -238,12 +246,14 @@ header {visibility: hidden;}
     box-shadow: 0 0 0 4px rgba(34,197,94,0.3);
 }
 
-/* Filtros modernos - bloco interno - TEMA CLARO */
-.tech-filter-section {
+/* Área dos controles dos filtros */
+.filter-controls-area {
     background: rgba(255,255,255,0.9);
     border-radius: 14px;
-    padding: 1rem 1rem 0.4rem 1rem;
+    padding: 1.5rem;
     border: 1px solid rgba(226,232,240,0.7);
+    position: relative;
+    z-index: 2;
 }
 
 /* Status indicators */
@@ -351,7 +361,7 @@ header {visibility: hidden;}
 """, unsafe_allow_html=True)
 
 # =============================
-# Funções auxiliares
+# Funções auxiliares (mantidas da versão anterior)
 # =============================
 def load_from_gsheet_csv(sheet_id: str, gid: str = "0", sep: str = ","):
     url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid={gid}"
@@ -678,48 +688,44 @@ else:
     df["Mes_filtro"] = None
 
 # =============================
-# Filtros Modernizados (retângulo estilizado)
+# Filtros Modernizados - ESTRUTURA CORRIGIDA
 # =============================
-with st.container():
-    st.markdown(
-        """
-        <div class="tech-filter-wrapper tech-fade-in">
-          <div class="tech-filter-inner">
-            <div class="tech-filter-header">
-              <div class="tech-filter-header-left">
-                <div class="tech-filter-icon">🔍</div>
-                <div class="tech-filter-text">
-                  <div class="tech-filter-title">Filtros de pesquisa</div>
-                  <div class="tech-filter-subtitle">
-                    Refine os dados por período, ocorrência e unidade monitorada
-                  </div>
-                </div>
-              </div>
-              <div class="tech-filter-chip">
-                Filtro aplicado em tempo real
-              </div>
-            </div>
-            <div class="tech-filter-section">
-        """,
-        unsafe_allow_html=True,
-    )
 
+# Primeiro criamos o container principal
+st.markdown("""
+<div class="filter-main-container tech-fade-in">
+    <div class="filter-header">
+        <div class="filter-header-left">
+            <div class="filter-icon">🔍</div>
+            <div class="filter-text">
+                <div class="filter-title">Filtros de pesquisa</div>
+                <div class="filter-subtitle">Refine os dados por período, ocorrência e unidade monitorada</div>
+            </div>
+        </div>
+        <div class="filter-chip">Filtro aplicado em tempo real</div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+# Agora criamos um container vazio para os controles
+filter_container = st.container()
+
+# Dentro do container, aplicamos o estilo da área de controles
+with filter_container:
+    st.markdown('<div class="filter-controls-area">', unsafe_allow_html=True)
+    
     col_f1, col_f2, col_f3 = st.columns([1.2, 1.2, 1.6])
 
     # Ano (Data Filtro) – com botão para ativar
     with col_f1:
-        anos_lista = (
-            sorted(df["Ano_filtro"].dropna().unique().tolist())
-            if "Ano_filtro" in df.columns
-            else []
-        )
+        anos_lista = sorted(df["Ano_filtro"].dropna().unique().tolist()) if "Ano_filtro" in df.columns else []
         if anos_lista:
             use_filter_ano = st.toggle("📅 Filtrar Ano", value=False)
             if use_filter_ano:
                 ano_sel = st.multiselect(
                     "Ano (Data Filtro)",
                     options=anos_lista,
-                    default=anos_lista,
+                    default=anos_lista
                 )
             else:
                 ano_sel = []
@@ -729,33 +735,17 @@ with st.container():
 
     # Mês (Data Filtro) – com botão para ativar
     with col_f2:
-        meses_lista = (
-            [m for m in df["Mes_filtro"].dropna().unique().tolist()]
-            if "Mes_filtro" in df.columns
-            else []
-        )
+        meses_lista = [m for m in df["Mes_filtro"].dropna().unique().tolist()] if "Mes_filtro" in df.columns else []
         if meses_lista:
-            ordem_meses = [
-                "Jan",
-                "Fev",
-                "Mar",
-                "Abr",
-                "Mai",
-                "Jun",
-                "Jul",
-                "Ago",
-                "Set",
-                "Out",
-                "Nov",
-                "Dez",
-            ]
+            ordem_meses = ["Jan","Fev","Mar","Abr","Mai","Jun",
+                           "Jul","Ago","Set","Out","Nov","Dez"]
             meses_lista = sorted(meses_lista, key=lambda x: ordem_meses.index(x))
             use_filter_mes = st.toggle("🗓️ Filtrar Mês", value=False)
             if use_filter_mes:
                 mes_sel = st.multiselect(
                     "Mês (Data Filtro)",
                     options=meses_lista,
-                    default=meses_lista,
+                    default=meses_lista
                 )
             else:
                 mes_sel = []
@@ -767,55 +757,36 @@ with st.container():
     with col_f3:
         search_text = st.text_input(
             "🔎 Buscar por CÓDIGO ou Nome",
-            placeholder="Digite parte do código ou do nome",
+            placeholder="Digite parte do código ou do nome"
         )
 
     col_f4, col_f5 = st.columns(2)
 
     with col_f4:
-        ocorr_opts = sorted(
-            [
-                o
-                for o in df.get("Ocorrências", pd.Series())
-                .dropna()
-                .unique()
-                .tolist()
-            ]
-        )
+        ocorr_opts = sorted([o for o in df.get("Ocorrências", pd.Series()).dropna().unique().tolist()])
         ocorr_sel = st.multiselect(
             "⚠️ Filtrar Ocorrências",
             options=ocorr_opts,
-            default=ocorr_opts if ocorr_opts else None,
+            default=ocorr_opts if ocorr_opts else None
         )
 
     with col_f5:
         pass
-
-    st.markdown(
-        """
-            </div> <!-- .tech-filter-section -->
-          </div>   <!-- .tech-filter-inner -->
-        </div>     <!-- .tech-filter-wrapper -->
-        """,
-        unsafe_allow_html=True,
-    )
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # =============================
-# Aplicação dos filtros
+# Aplicação dos filtros (mantido igual)
 # =============================
 fdf = df.copy()
 
 # Ano: só filtra se o toggle estiver ligado e houver seleção
-if "Ano_filtro" in fdf.columns:
-    if 'use_filter_ano' in locals() and anos_lista and ano_sel:
-        if use_filter_ano and ano_sel:
-            fdf = fdf[fdf["Ano_filtro"].isin(ano_sel)]
+if use_filter_ano and anos_lista and ano_sel:
+    fdf = fdf[fdf["Ano_filtro"].isin(ano_sel)]
 
 # Mês: só filtra se o toggle estiver ligado e houver seleção
-if "Mes_filtro" in fdf.columns:
-    if 'use_filter_mes' in locals() and meses_lista and mes_sel:
-        if use_filter_mes and mes_sel:
-            fdf = fdf[fdf["Mes_filtro"].isin(mes_sel)]
+if use_filter_mes and meses_lista and mes_sel:
+    fdf = fdf[fdf["Mes_filtro"].isin(mes_sel)]
 
 # Ocorrências
 if ocorr_sel and "Ocorrências" in fdf.columns:
@@ -832,8 +803,11 @@ if search_text:
     fdf = fdf[mask]
 
 # =============================
-# Cálculo de alertas de divergência
+# O RESTANTE DO CÓDIGO PERMANECE IGUAL...
+# (Cálculo de alertas, KPIs, Mapa, Gráficos, Tabela, Footer)
 # =============================
+
+# Cálculo de alertas de divergência
 for col in [
     "Nº Viveiros total",
     "Atual Viveiros Total",
