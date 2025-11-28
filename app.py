@@ -429,6 +429,43 @@ for col in numeric_cols_csv:
 # Preparação de datas para filtros
 # =============================
 
+def parse_data_filtro(v):
+    """Converte string tipo 2025/11/04 11:22:03.951+00 em datetime no fuso de Fortaleza."""
+    if v is None or (isinstance(v, float) and math.isnan(v)):
+        return pd.NaT
+    s = str(v).strip()
+    if s == "" or s.lower() in ("nan", "nat", "none"):
+        return pd.NaT
+
+    # normaliza separador de data
+    s = s.replace("/", "-")
+
+    # garante timezone no formato +HH:MM (se vier só +00, vira +00:00)
+    m = re.search(r"\+\d{2}(:\d{2})?$", s)
+    if m:
+        tz_part = m.group(0)
+        if ":" not in tz_part:
+            s = s.replace(tz_part, tz_part + ":00")
+
+    # tenta parsear pelo formato mais comum
+    try:
+        dt = datetime.strptime(s, "%Y-%m-%d %H:%M:%S.%f%z")
+        return dt.astimezone(TZ)
+    except Exception:
+        pass
+
+    # fallback: deixa o pandas adivinhar
+    try:
+        dt = pd.to_datetime(s, errors="coerce", utc=True)
+        if pd.isna(dt):
+            return pd.NaT
+        # garante tz e converte
+        if dt.tzinfo is None:
+            dt = dt.tz_localize("UTC")
+        return dt.tz_convert(TZ)
+    except Exception:
+        return pd.NaT
+
 # Tenta localizar a coluna de data mesmo com espaços/variações
 date_col = None
 for c in df.columns:
@@ -437,25 +474,7 @@ for c in df.columns:
         break
 
 if date_col is not None:
-    # Garante string limpa
-    data_raw = df[date_col].astype(str).str.strip()
-
-    # Só considera linhas não vazias
-    mask_valid = data_raw.str.len() > 0
-
-    # Normaliza formato:
-    # 2025/11/04 11:22:03.951+00  -> 2025-11-04 11:22:03.951+00:00
-    # 2025-11-04 11:22:03.951+00:00  -> continua igual
-    data_norm = data_raw.str.replace("/", "-", regex=False)
-    data_norm = data_norm.str.replace(r"\+00(?!:)", "+00:00", regex=True)
-
-    # Converte para datetime em UTC
-    dt = pd.to_datetime(data_norm.where(mask_valid, None), errors="coerce", utc=True)
-
-    # Joga pra Fortaleza
-    df["_Data_dt"] = dt.dt.tz_convert(TZ)
-
-    # Extrai ano e mês
+    df["_Data_dt"] = df[date_col].apply(parse_data_filtro)
     df["Ano_filtro"] = df["_Data_dt"].dt.year
     df["Mes_filtro_num"] = df["_Data_dt"].dt.month
 
@@ -469,9 +488,6 @@ else:
     df["_Data_dt"] = pd.NaT
     df["Ano_filtro"] = None
     df["Mes_filtro"] = None
-
-
-
 
 # =============================
 # Filtros Modernizados
@@ -1177,7 +1193,7 @@ st.markdown("""
     <div style="font-size: 0.9rem; margin-bottom: 0.5rem;">
         🐟 <strong>Sistema de Monitoramento de Viveiros</strong>
     </div>
-    <div style="font-size: 0.8rem; opacity: 0.8%;">
+    <div style="font-size: 0.8rem; opacity: 0.8;">
         Desenvolvido para apoiar a gestão, a fiscalização e a tomada de decisão com base em dados atualizados.
     </div>
 </div>
