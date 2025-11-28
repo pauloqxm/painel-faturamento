@@ -447,19 +447,16 @@ def parse_data_filtro(v):
         if ":" not in tz_part:
             s = s.replace(tz_part, tz_part + ":00")
 
-    # tenta parsear pelo formato mais comum
     try:
         dt = datetime.strptime(s, "%Y-%m-%d %H:%M:%S.%f%z")
         return dt.astimezone(TZ)
     except Exception:
         pass
 
-    # fallback: deixa o pandas adivinhar
     try:
         dt = pd.to_datetime(s, errors="coerce", utc=True)
         if pd.isna(dt):
             return pd.NaT
-        # garante tz e converte
         if dt.tzinfo is None:
             dt = dt.tz_localize("UTC")
         return dt.tz_convert(TZ)
@@ -494,42 +491,45 @@ else:
 # =============================
 st.markdown("### 🔍 Filtros de Pesquisa")
 
+# listas base para ano/mês/ocorrências
+anos_lista = []
+if "Ano_filtro" in df.columns:
+    anos_lista = sorted(df["Ano_filtro"].dropna().unique().tolist())
+
+meses_lista = []
+if "Mes_filtro" in df.columns:
+    meses_lista = [m for m in df["Mes_filtro"].dropna().unique().tolist()]
+    if meses_lista:
+        ordem_meses = ["Jan","Fev","Mar","Abr","Mai","Jun",
+                       "Jul","Ago","Set","Out","Nov","Dez"]
+        meses_lista = sorted(meses_lista, key=lambda x: ordem_meses.index(x))
+
+ocorr_opts = sorted([o for o in df.get("Ocorrências", pd.Series()).dropna().unique().tolist()])
+
 with st.expander("Filtros avançados", expanded=True):
     col_f1, col_f2, col_f3 = st.columns([1.2, 1.2, 1.6])
 
-    # Ano (Data Filtro)
+    # Ano (Data Filtro) – sempre visível, estilo multiselect
     with col_f1:
-        anos = []
-        if "Ano_filtro" in df.columns:
-            anos = sorted([a for a in df["Ano_filtro"].dropna().unique().tolist()])
-        use_filter_ano = st.toggle("📅 Filtrar ano", value=False)
-        if use_filter_ano and anos:
+        if anos_lista:
             ano_sel = st.multiselect(
-                "Ano (Data Filtro)",
-                options=anos,
-                default=anos
+                "📅 Ano (Data Filtro)",
+                options=anos_lista,
+                default=anos_lista
             )
         else:
-            ano_sel = None
+            ano_sel = []
 
-    # Mês (Data Filtro)
+    # Mês (Data Filtro) – sempre visível
     with col_f2:
-        meses = []
-        if "Mes_filtro" in df.columns:
-            meses = [m for m in df["Mes_filtro"].dropna().unique().tolist()]
-            if meses:
-                ordem_meses = ["Jan","Fev","Mar","Abr","Mai","Jun",
-                               "Jul","Ago","Set","Out","Nov","Dez"]
-                meses = sorted(meses, key=lambda x: ordem_meses.index(x))
-        use_filter_mes = st.toggle("🗓️ Filtrar mês", value=False)
-        if use_filter_mes and meses:
+        if meses_lista:
             mes_sel = st.multiselect(
-                "Mês (Data Filtro)",
-                options=meses,
-                default=meses
+                "🗓️ Mês (Data Filtro)",
+                options=meses_lista,
+                default=meses_lista
             )
         else:
-            mes_sel = None
+            mes_sel = []
 
     # Busca por código ou nome
     with col_f3:
@@ -541,7 +541,6 @@ with st.expander("Filtros avançados", expanded=True):
     col_f4, col_f5 = st.columns(2)
 
     with col_f4:
-        ocorr_opts = sorted([o for o in df.get("Ocorrências", pd.Series()).dropna().unique().tolist()])
         ocorr_sel = st.multiselect(
             "⚠️ Filtrar Ocorrências",
             options=ocorr_opts,
@@ -556,10 +555,12 @@ with st.expander("Filtros avançados", expanded=True):
 # =============================
 fdf = df.copy()
 
-if use_filter_ano and "Ano_filtro" in fdf.columns and ano_sel:
+# Ano: só filtra se o usuário tirar algum ano (default é todos)
+if anos_lista and ano_sel and len(ano_sel) < len(anos_lista):
     fdf = fdf[fdf["Ano_filtro"].isin(ano_sel)]
 
-if use_filter_mes and "Mes_filtro" in fdf.columns and mes_sel:
+# Mês: mesma lógica
+if meses_lista and mes_sel and len(mes_sel) < len(meses_lista):
     fdf = fdf[fdf["Mes_filtro"].isin(mes_sel)]
 
 if ocorr_sel and "Ocorrências" in fdf.columns:
@@ -696,7 +697,6 @@ else:
         "Revise estas unidades com atenção."
     )
 
-    # Classificação das linhas
     def classifica_linha(row):
         pos = False
         neg = False
@@ -720,7 +720,6 @@ else:
     if diff_cols:
         alertas_df["Tipo Divergência"] = alertas_df.apply(classifica_linha, axis=1)
 
-    # Filtro por tipo (valores iguais aos da coluna)
     filtro_tipo = st.radio(
         "Filtrar divergências",
         ["Todas", "Positiva", "Negativa", "Mista"],
@@ -731,7 +730,6 @@ else:
     if filtro_tipo != "Todas":
         df_exibir = df_exibir[df_exibir["Tipo Divergência"] == filtro_tipo]
 
-    # Criar colunas de diferença
     if "diff_viv_total" in df_exibir.columns:
         df_exibir["Δ Viveiros Total"] = df_exibir["diff_viv_total"]
     if "diff_viv_cheio" in df_exibir.columns:
@@ -741,7 +739,6 @@ else:
     if "diff_prof" in df_exibir.columns:
         df_exibir["Δ Profundidade (m)"] = df_exibir["diff_prof"]
 
-    # Ordem das colunas (como no print)
     cols_alerta = [
         "CÓDIGO",
         "Nome",
@@ -761,7 +758,6 @@ else:
     ]
     cols_exist_alerta = [c for c in cols_alerta if c in df_exibir.columns]
 
-    # Colunas de diferença
     subset_diff = [
         c for c in [
             "Δ Viveiros Total",
@@ -771,7 +767,6 @@ else:
         ] if c in df_exibir.columns
     ]
 
-    # Lista fixa de colunas numéricas que queremos com 2 casas
     numeric_cols_all = [
         "Nº Viveiros total",
         "Atual Viveiros Total",
@@ -788,16 +783,13 @@ else:
     ]
     numeric_cols = [c for c in numeric_cols_all if c in cols_exist_alerta]
 
-    # Faz uma cópia só para exibição e força tudo para número onde der
     df_view = df_exibir[cols_exist_alerta].copy()
     for col in numeric_cols:
         df_view[col] = pd.to_numeric(df_view[col], errors="coerce")
 
-    # Formatação: TODAS essas numéricas com 2 casas
     fmt = {c: "{:.2f}" for c in numeric_cols}
     styler = df_view.style.format(fmt)
 
-    # Blocos com fundo suave (sem sobrescrever os Δ)
     bloco_viv_total = {"Nº Viveiros total", "Atual Viveiros Total", "Δ Viveiros Total"}
     bloco_viv_cheio = {"Nº Viveiros cheio", "Atual Viveiros cheio", "Δ Viveiros Cheio"}
     bloco_area = {"Área (ha).1", "Atual Área (ha).1", "Δ Área (ha)"}
@@ -806,20 +798,19 @@ else:
     def color_block(col):
         name = col.name
         if name in subset_diff:
-            return [""] * len(col)  # Δ recebem estilo próprio depois
+            return [""] * len(col)
         if name in bloco_viv_total:
-            return ["background-color: #f8fafc;"] * len(col)   # azul claro
+            return ["background-color: #f8fafc;"] * len(col)
         if name in bloco_viv_cheio:
-            return ["background-color: #f4fbf6;"] * len(col)   # verde claro
+            return ["background-color: #f4fbf6;"] * len(col)
         if name in bloco_area:
-            return ["background-color: #fffaf0;"] * len(col)   # amarelo claro
+            return ["background-color: #fffaf0;"] * len(col)
         if name in bloco_prof:
-            return ["background-color: #f9f5ff;"] * len(col)   # lilás claro
+            return ["background-color: #f9f5ff;"] * len(col)
         return [""] * len(col)
 
     styler = styler.apply(color_block, axis=0)
 
-    # Estilo das colunas de diferença: célula inteira verde/vermelha, fonte branca
     def cor_diferenca(val):
         if pd.isna(val):
             return ""
@@ -873,7 +864,6 @@ with col_map:
         lat_col = "Lati" if "Lati" in fdf.columns else None
         lon_col = "Long" if "Long" in fdf.columns else None
 
-        # Cores por Ocorrências
         ocorr_vals = sorted(
             [str(o) for o in fdf.get("Ocorrências", pd.Series()).dropna().unique().tolist()]
         )
@@ -922,7 +912,6 @@ with col_map:
 
         fg_pontos.add_to(fmap)
 
-        # Heatmap usando Lati e Long
         if "Atual Viveiros Total_num" in fdf.columns and lat_col and lon_col:
             heat_rows = []
             for _, row in fdf.iterrows():
@@ -960,7 +949,6 @@ with col_map:
                 [max(p[0] for p in pts), max(p[1] for p in pts)],
             ])
 
-        # Legenda dinâmica por Ocorrências
         if ocorr_colors:
             legend_items_html = ""
             for o, color in ocorr_colors.items():
