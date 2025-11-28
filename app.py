@@ -426,27 +426,40 @@ for col in numeric_cols_csv:
         df[col] = df[col].apply(to_number)
 
 # =============================
-# =============================
 # Preparação de datas para filtros
 # =============================
-if "Data Filtro" in df.columns:
+
+# Tenta localizar a coluna de data mesmo com espaços/variações
+date_col = None
+for c in df.columns:
+    if re.sub(r"\s+", "", str(c)).lower() == "datafiltro":
+        date_col = c
+        break
+
+if date_col is not None:
     # Garante string limpa
-    data_raw = df["Data Filtro"].astype(str).str.strip()
+    data_raw = df[date_col].astype(str).str.strip()
 
-    # Normaliza separador de data: 2025/11/04 -> 2025-11-04
-    data_norm = data_raw.str.replace("/", "-", regex=False)
+    # Só considera linhas não vazias
+    mask_valid = data_raw.str.len() > 0
 
-    # Converte levando em conta o fuso (+00 na string)
-    # Ex: 2025-11-04 11:22:03.951+00
-    dt = pd.to_datetime(data_norm, errors="coerce", utc=True)
+    # Normaliza formato:
+    # 2025/11/04 11:22:03.951+00 -> 2025-11-04 11:22:03.951+00:00
+    data_norm = data_raw.copy()
+    data_norm = data_norm.str.replace("/", "-", regex=False)
+    data_norm = data_norm.str.replace("+00", "+00:00", regex=False)
 
-    # Converte para horário de Fortaleza (se tiver timezone)
-    try:
-        dt_local = dt.dt.tz_convert(TZ)
-    except Exception:
-        dt_local = dt  # se vier sem tz, usa direto
+    # Converte para datetime (pandas detecta o timezone)
+    dt = pd.to_datetime(data_norm, errors="coerce")
 
-    df["_Data_dt"] = dt_local
+    # Cria coluna vazia e preenche só onde é válido
+    df["_Data_dt"] = pd.NaT
+    df.loc[mask_valid, "_Data_dt"] = dt
+
+    # Traz para o fuso de Fortaleza quando tiver timezone
+    if pd.api.types.is_datetime64tz_dtype(df["_Data_dt"].dtype):
+        df["_Data_dt"] = df["_Data_dt"].dt.tz_convert(TZ)
+
     df["Ano_filtro"] = df["_Data_dt"].dt.year
     df["Mes_filtro_num"] = df["_Data_dt"].dt.month
 
@@ -457,8 +470,10 @@ if "Data Filtro" in df.columns:
     }
     df["Mes_filtro"] = df["Mes_filtro_num"].map(meses_map)
 else:
+    df["_Data_dt"] = pd.NaT
     df["Ano_filtro"] = None
     df["Mes_filtro"] = None
+
 
 
 # =============================
