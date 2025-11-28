@@ -205,7 +205,6 @@ def to_number(v):
     s = str(v).strip()
     if s == "":
         return np.nan
-    # Trata casos com vírgula como decimal
     if "," in s and s.count(",") == 1 and s.count(".") <= 1:
         s = s.replace(".", "").replace(",", ".")
     else:
@@ -482,7 +481,6 @@ with st.expander("Filtros avançados", expanded=True):
         )
 
     with col_f5:
-        # Espaço para filtros adicionais no futuro
         pass
 
 # =============================
@@ -518,26 +516,26 @@ for col in ["Nº Viveiros total", "Atual Viveiros Total",
     if col in fdf.columns:
         fdf[col + "_num"] = fdf[col].apply(to_number)
 
-div_cols = []
+diff_cols = []
 
 if {"Nº Viveiros total_num", "Atual Viveiros Total_num"}.issubset(fdf.columns):
     fdf["diff_viv_total"] = fdf["Atual Viveiros Total_num"] - fdf["Nº Viveiros total_num"]
-    div_cols.append("diff_viv_total")
+    diff_cols.append("diff_viv_total")
 
 if {"Nº Viveiros cheio_num", "Atual Viveiros cheio_num"}.issubset(fdf.columns):
     fdf["diff_viv_cheio"] = fdf["Atual Viveiros cheio_num"] - fdf["Nº Viveiros cheio_num"]
-    div_cols.append("diff_viv_cheio")
+    diff_cols.append("diff_viv_cheio")
 
 if {"Área (ha).1_num", "Atual Área (ha).1_num"}.issubset(fdf.columns):
     fdf["diff_area"] = fdf["Atual Área (ha).1_num"] - fdf["Área (ha).1_num"]
-    div_cols.append("diff_area")
+    diff_cols.append("diff_area")
 
 if {"Prof. Média  (m)_num", "Atual Profun._num"}.issubset(fdf.columns):
     fdf["diff_prof"] = fdf["Atual Profun._num"] - fdf["Prof. Média  (m)_num"]
-    div_cols.append("diff_prof")
+    diff_cols.append("diff_prof")
 
 div_mask = pd.Series([False] * len(fdf))
-for c in div_cols:
+for c in diff_cols:
     div_mask = div_mask | (fdf[c].fillna(0) != 0)
 
 alertas_df = fdf[div_mask].copy()
@@ -550,7 +548,6 @@ st.markdown("### 📈 Indicadores Principais")
 base_df = fdf.copy()
 
 total_unidades = len(base_df)
-
 total_viveiros_total = base_df.get("Atual Viveiros Total_num", pd.Series(dtype=float)).fillna(0).sum()
 total_viveiros_cheio = base_df.get("Atual Viveiros cheio_num", pd.Series(dtype=float)).fillna(0).sum()
 total_area = base_df.get("Atual Área (ha).1_num", pd.Series(dtype=float)).fillna(0).sum()
@@ -624,18 +621,90 @@ else:
         "Revise estas unidades com atenção."
     )
 
-    cols_alerta = ["CÓDIGO", "Nome",
-                   "Nº Viveiros total", "Atual Viveiros Total",
-                   "Nº Viveiros cheio", "Atual Viveiros cheio",
-                   "Área (ha).1", "Atual Área (ha).1",
-                   "Prof. Média  (m)", "Atual Profun."]
+    # Classificação das linhas por tipo de divergência
+    def classifica_linha(row):
+        pos = False
+        neg = False
+        for c in diff_cols:
+            v = row.get(c)
+            if pd.isna(v):
+                continue
+            if v > 0:
+                pos = True
+            if v < 0:
+                neg = True
+        if pos and not neg:
+            return "Positiva"
+        if neg and not pos:
+            return "Negativa"
+        if pos and neg:
+            return "Mista"
+        return "Zero"
 
-    cols_exist_alerta = [c for c in cols_alerta if c in alertas_df.columns]
+    alertas_df = alertas_df.copy()
+    if diff_cols:
+        alertas_df["Tipo Divergência"] = alertas_df.apply(classifica_linha, axis=1)
+
+    filtro_tipo = st.radio(
+        "Filtrar divergências",
+        ["Todas", "Positivas", "Negativas", "Mistas"],
+        horizontal=True
+    )
+
+    df_exibir = alertas_df
+    if filtro_tipo == "Positivas":
+        df_exibir = alertas_df[alertas_df["Tipo Divergência"] == "Positiva"]
+    elif filtro_tipo == "Negativas":
+        df_exibir = alertas_df[alertas_df["Tipo Divergência"] == "Negativa"]
+    elif filtro_tipo == "Mistas":
+        df_exibir = alertas_df[alertas_df["Tipo Divergência"] == "Mista"]
+
+    # Colunas base
+    cols_alerta = [
+        "CÓDIGO", "Nome",
+        "Nº Viveiros total", "Atual Viveiros Total",
+        "Nº Viveiros cheio", "Atual Viveiros cheio",
+        "Área (ha).1", "Atual Área (ha).1",
+        "Prof. Média  (m)", "Atual Profun.",
+        "Tipo Divergência"
+    ]
+
+    # Novas colunas de diferença
+    df_exibir = df_exibir.copy()
+    if "diff_viv_total" in df_exibir.columns:
+        df_exibir["Δ Viveiros Total"] = df_exibir["diff_viv_total"].round(0)
+        cols_alerta.append("Δ Viveiros Total")
+    if "diff_viv_cheio" in df_exibir.columns:
+        df_exibir["Δ Viveiros Cheio"] = df_exibir["diff_viv_cheio"].round(0)
+        cols_alerta.append("Δ Viveiros Cheio")
+    if "diff_area" in df_exibir.columns:
+        df_exibir["Δ Área (ha)"] = df_exibir["diff_area"].round(2)
+        cols_alerta.append("Δ Área (ha)")
+    if "diff_prof" in df_exibir.columns:
+        df_exibir["Δ Profundidade (m)"] = df_exibir["diff_prof"].round(2)
+        cols_alerta.append("Δ Profundidade (m)")
+
+    cols_exist_alerta = [c for c in cols_alerta if c in df_exibir.columns]
+
+    def cor_diferenca(val):
+        if pd.isna(val):
+            return ""
+        if val > 0:
+            return "color: #27ae60; font-weight:600;"   # verde
+        if val < 0:
+            return "color: #e74c3c; font-weight:600;"   # vermelho
+        return ""
+
+    subset_diff = [c for c in ["Δ Viveiros Total", "Δ Viveiros Cheio", "Δ Área (ha)", "Δ Profundidade (m)"] if c in df_exibir.columns]
+
+    styler = df_exibir[cols_exist_alerta].style
+    if subset_diff:
+        styler = styler.applymap(cor_diferenca, subset=subset_diff)
 
     st.dataframe(
-        alertas_df[cols_exist_alerta],
+        styler,
         use_container_width=True,
-        height=250
+        height=300
     )
 
 # =============================
@@ -673,6 +742,17 @@ with col_map:
         lat_col = "Lati" if "Lati" in fdf.columns else None
         lon_col = "Long" if "Long" in fdf.columns else None
 
+        # Cores por Ocorrências
+        ocorr_vals = sorted(
+            [str(o) for o in fdf.get("Ocorrências", pd.Series()).dropna().unique().tolist()]
+        )
+        palette = [
+            "#0984e3", "#00b894", "#e17055", "#6c5ce7",
+            "#d63031", "#fdcb6e", "#2d3436", "#ff7675",
+            "#00cec9", "#6c5ce7"
+        ]
+        ocorr_colors = {o: palette[i % len(palette)] for i, o in enumerate(ocorr_vals)}
+
         for _, row in fdf.iterrows():
             if not lat_col or not lon_col:
                 continue
@@ -682,6 +762,9 @@ with col_map:
             if lat is None or lon is None or math.isnan(lat) or math.isnan(lon):
                 continue
 
+            ocorr = str(row.get("Ocorrências", "") or "")
+            color = ocorr_colors.get(ocorr, "#0984e3")
+
             popup_html = make_popup_html(row)
             popup = folium.Popup(popup_html, max_width=380)
 
@@ -689,13 +772,15 @@ with col_map:
             cod = row.get("CÓDIGO")
             if cod:
                 tooltip_text = f"{cod} • {tooltip_text}"
+            if ocorr:
+                tooltip_text += f" • {ocorr}"
 
             folium.CircleMarker(
                 location=[lat, lon],
                 radius=8,
-                color="#0984e3",
+                color=color,
                 fill=True,
-                fill_color="#0984e3",
+                fill_color=color,
                 fill_opacity=0.9,
                 popup=popup,
                 tooltip=tooltip_text,
@@ -736,7 +821,22 @@ with col_map:
                 [max(p[0] for p in pts), max(p[1] for p in pts)],
             ])
 
-        # Legenda recolhível
+        # Legenda dinâmica por Ocorrências
+        if ocorr_colors:
+            legend_items_html = ""
+            for o, color in ocorr_colors.items():
+                legend_items_html += f"""
+                <div style="display:flex;align-items:center;margin-bottom:4px;">
+                  <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:{color};margin-right:6px;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.3);"></span>{o}
+                </div>
+                """
+        else:
+            legend_items_html = """
+            <div style="display:flex;align-items:center;margin-bottom:4px;">
+              <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#0984e3;margin-right:6px;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.3);"></span>Unidade cadastrada
+            </div>
+            """
+
         legend_html = """
         {% macro html(this, kwargs) %}
         <div id="legend-viveiros" style="
@@ -758,20 +858,18 @@ with col_map:
                  var body = document.getElementById('legend-viveiros-body');
                  if (body.style.display === 'none') {
                      body.style.display = 'block';
-                     this.innerHTML = 'Unidades de Viveiros ▾';
+                     this.innerHTML = 'Ocorrências ▾';
                  } else {
                      body.style.display = 'none';
-                     this.innerHTML = 'Unidades de Viveiros ▸';
+                     this.innerHTML = 'Ocorrências ▸';
                  }
                ">
-            Unidades de Viveiros ▾
+            Ocorrências ▾
           </div>
           <div id="legend-viveiros-body" style="margin-top:4px;">
-            <div style="display:flex;align-items:center;margin-bottom:4px;">
-              <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#0984e3;margin-right:6px;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.3);"></span>Unidade cadastrada
-            </div>
+        """ + legend_items_html + """
             <div style="font-size:11px;color:#636e72;margin-top:4px;">
-              Clique em um ponto para ver detalhes e fotos.
+              Cores por categoria de ocorrência. Clique em um ponto para ver detalhes e fotos.
             </div>
           </div>
         </div>
