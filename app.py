@@ -659,43 +659,56 @@ else:
     elif filtro_tipo == "Mistas":
         df_exibir = alertas_df[alertas_df["Tipo Divergência"] == "Mista"]
 
-    # Colunas base
-    cols_alerta = [
-        "CÓDIGO", "Nome",
-        "Nº Viveiros total", "Atual Viveiros Total",
-        "Nº Viveiros cheio", "Atual Viveiros cheio",
-        "Área (ha).1", "Atual Área (ha).1",
-        "Prof. Média  (m)", "Atual Profun.",
-        "Tipo Divergência"
-    ]
-
-    # Novas colunas de diferença
     df_exibir = df_exibir.copy()
+
+    # Cria colunas de diferença (já com 2 casas decimais)
     if "diff_viv_total" in df_exibir.columns:
-        df_exibir["Δ Viveiros Total"] = df_exibir["diff_viv_total"].round(0)
-        cols_alerta.append("Δ Viveiros Total")
+        df_exibir["Δ Viveiros Total"] = df_exibir["diff_viv_total"].round(2)
     if "diff_viv_cheio" in df_exibir.columns:
-        df_exibir["Δ Viveiros Cheio"] = df_exibir["diff_viv_cheio"].round(0)
-        cols_alerta.append("Δ Viveiros Cheio")
+        df_exibir["Δ Viveiros Cheio"] = df_exibir["diff_viv_cheio"].round(2)
     if "diff_area" in df_exibir.columns:
         df_exibir["Δ Área (ha)"] = df_exibir["diff_area"].round(2)
-        cols_alerta.append("Δ Área (ha)")
     if "diff_prof" in df_exibir.columns:
         df_exibir["Δ Profundidade (m)"] = df_exibir["diff_prof"].round(2)
-        cols_alerta.append("Δ Profundidade (m)")
 
+    # Ordem das colunas (como no print)
+    cols_alerta = [
+        "CÓDIGO",
+        "Nome",
+        "Nº Viveiros total",
+        "Atual Viveiros Total",
+        "Δ Viveiros Total",
+        "Nº Viveiros cheio",
+        "Atual Viveiros cheio",
+        "Δ Viveiros Cheio",
+        "Área (ha).1",
+        "Atual Área (ha).1",
+        "Δ Área (ha)",
+        "Prof. Média  (m)",
+        "Atual Profun.",
+        "Δ Profundidade (m)",
+        "Tipo Divergência",
+    ]
     cols_exist_alerta = [c for c in cols_alerta if c in df_exibir.columns]
 
+    # Estilo: célula inteira verde/vermelha com fonte branca
     def cor_diferenca(val):
         if pd.isna(val):
             return ""
         if val > 0:
-            return "color: #27ae60; font-weight:600;"   # verde
+            return "background-color: #27ae60; color: white; font-weight:600;"
         if val < 0:
-            return "color: #e74c3c; font-weight:600;"   # vermelho
+            return "background-color: #e74c3c; color: white; font-weight:600;"
         return ""
 
-    subset_diff = [c for c in ["Δ Viveiros Total", "Δ Viveiros Cheio", "Δ Área (ha)", "Δ Profundidade (m)"] if c in df_exibir.columns]
+    subset_diff = [
+        c for c in [
+            "Δ Viveiros Total",
+            "Δ Viveiros Cheio",
+            "Δ Área (ha)",
+            "Δ Profundidade (m)"
+        ] if c in df_exibir.columns
+    ]
 
     styler = df_exibir[cols_exist_alerta].style
     if subset_diff:
@@ -704,8 +717,9 @@ else:
     st.dataframe(
         styler,
         use_container_width=True,
-        height=300
+        height=400
     )
+
 
 # =============================
 # Layout Mapa + Fotos
